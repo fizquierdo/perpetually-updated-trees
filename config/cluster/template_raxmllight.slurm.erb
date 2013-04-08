@@ -1,0 +1,151 @@
+#!/bin/bash
+#SBATCH -J raxmllight_<%=params[:exp_name_run_num]%>
+#SBATCH -d singleton  # ensures that each job with this name
+                      # will only run one at a time
+#SBATCH -n <%=params[:num_tasks]%>
+<% if @conf['development']  %>
+#SBATCH -p development
+<% else  %>
+#SBATCH -p normal
+<% end  %>
+#SBATCH -o raxmllight_<%=params[:exp_name_run_num]%>.o%j
+#SBATCH -e raxmllight_<%=params[:exp_name_run_num]%>.o%j
+<% if @conf['development']  %>
+#SBATCH -t 00:05:00
+<% else  %>
+#SBATCH -t 24:00:00
+<% end  %>
+#SBATCH -A <%=params[:project]%> 
+
+#$ -N raxmllight_<%=params[:exp_name_run_num]%>
+#$ -hold_jid "raxmllight_<%=params[:exp_name_run_num]%>"
+#$ -pe 1way <%=params[:num_tasks]%>
+<% if @conf['development']  %>
+#$ -q development
+<% else  %>
+#$ -q normal
+<% end  %>
+#$ -o $JOB_NAME.o$JOB_ID
+#$ -j y
+<% if @conf['development']  %>
+#$ -l h_rt=00:01:00
+<% else  %>
+#$ -l h_rt=24:00:00
+<% end  %>
+#$ -V
+#$ -cwd
+#$ -A <%=params[:project]%> 
+#------------------------------------------------------
+#
+
+
+#Handle MPI or 
+job_starter=""
+thread_flag=""
+if [ "<%=params[:num_nodes]%>" -gt "1" ]; then
+  #MPI job
+  job_starter="ibrun"
+else
+  thread_flag="-T <%=params[:num_threads]%>"
+fi
+
+#Set parsimony tree
+parsimony_tree="../parsimony_trees/<%=params[:tree_name]%>.0" 
+
+#set name
+name="<%=params[:exp_name_run_num]%>"
+
+#default count is 0
+countp1=0
+
+#Checkpoint settings
+#Keep an index file of the runs
+run_count="./run.${name}"
+
+#If the info file doesn't exist then this is the first run
+if [ ! -e RAxML_info.${name}.0 ]; then 
+  #if it is, set run_count to 0
+  echo "0" >| ${run_count}
+  echo "Initial run of ${name} "
+  # Original run
+${job_starter} <%=params[:binary]%> -s <%=params[:dataset_full_path]%> -m GTRCAT -D -t ${parsimony_tree} $thread_flag -n ${name}.0 
+
+  # The latest result file should always be available to raxmlhpc for scoring
+  #Copy the result file to the default result file name for the raxmlHPC step
+  cp -f RAxML_result.${name}.0 RAxML_result.${name}
+
+#Otherwise it's a restart
+else
+
+  #Get the count of the last run
+  count=`cat ${run_count}`
+  let countp1=count+1
+  echo "Restart run #${countp1} of ${name} "
+
+  # The latest result file should always be available to raxmlhpc for scoring
+  #Copy the result file from the last run to the default result file name for the raxmlHPC step
+  cp -f RAxML_result.${name}.${count} RAxML_result.${name}
+
+  #Set the info filename of the last run
+  info_file="RAxML_info.${name}.${count}"
+
+  #Check for the proper info file
+  if [ ! -e ${info_file} ]; then
+    echo "ERROR: ${info_file} not found for run #${count} "
+    exit
+  fi
+
+  #Check to see if the tree has been completed
+  grep -q Overall ${info_file} 
+  if  [ $? == 0 ] ; then
+   echo "Finished in previous run"
+   exit
+  fi
+
+  #Find the last checkpoint file
+  ckpt_file=`/bin/ls -1tr RAxML_binaryCheckpoint.${name}.${count}_* 2>/dev/null | tail -1 `
+  #Exit if checkpoint file from the last run cannot be found
+  if [ x$ckpt_file == x ] ; then
+    echo "ERROR: RAxML_binaryCheckpoint.${name}.${count}_* file not found"
+    exit
+  fi
+
+  #Reset the count in the count file
+  echo "${countp1}" >| ${run_count}
+
+  #Start RAxML with the checkpoint file
+  ${job_starter} <%=params[:binary]%> -s <%=params[:dataset_full_path]%> -m GTRCAT -D -R ${ckpt_file} $thread_flag -n ${name}.${countp1}
+
+  # The latest result file should always be available to raxmlhpc for scoring
+  #Copy the result file to the default result file name for the raxmlHPC step
+  cp -f RAxML_result.${name}.${countp1} RAxML_result.${name}
+fi
+
+
+# Now the file has finished and we can score the resultss
+scoring_name=SCORING_${name}
+<%=params[:raxmlHPC_pthreads]%> -s <%=params[:dataset_full_path]%> -m GTRGAMMA -f J -t RAxML_result.${name} $thread_flag -n ${scoring_name}
+
+port=<%=@conf['local_port']%> 
+user=<%=@conf['local_user']%> 
+machine=<%=@conf['local_machine']%> 
+path=<%=params[:local_ml_dir]%> 
+parsi_path=<%=params[:local_parsimony_dir]%> 
+
+# Send back the results to the local machine
+scp -P $port ${parsimony_tree} ${user}@${machine}:${parsi_path}
+for filename in RAxML_info.${name}.${countp1} RAxML_result.${name} RAxML_log.${name}.${countp1} RAxML_info.${scoring_name} RAxML_fastTreeSH_Support.${scoring_name} RAxML_fastTree.${scoring_name} 
+do
+  scp -P $port ${filename} ${user}@${machine}:${path}
+done
+
+# Now attempt to finish the iteration
+bunch=<%=params[:bestML_bunch]%>
+num_bestML_trees=<%=params[:num_bestML_trees]%>
+mail_to=<%=@conf['mail_to']%>
+update_id=<%=params[:update_id]%>
+iter_file=<%=params[:iteration_results_name]%>
+project_name=<%=params[:exp_name]%>
+tree_search_bunch_size=<%=params[:num_ptrees]%>
+
+ssh ${user}@${machine} -p $port PUT_FINISH $bunch $num_bestML_trees $mail_to $update_id $path $iter_file $project_name $tree_search_bunch_size 

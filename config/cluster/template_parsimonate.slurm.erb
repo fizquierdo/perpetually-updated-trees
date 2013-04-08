@@ -1,0 +1,81 @@
+#!/bin/bash
+#SBATCH -J parsimonate_<%=params[:exp_name_run_num]%>
+#SBATCH -n <%=params[:num_tasks]%>
+#SBATCH -N <%=params[:num_tasks]%>
+<% if @conf['development']  %>
+#SBATCH -p development
+<% else  %>
+#SBATCH -p normal
+<% end  %>
+#SBATCH -o parsimonate_<%=params[:exp_name_run_num]%>.o%j
+#SBATCH -e parsimonate_<%=params[:exp_name_run_num]%>.o%j
+<% if @conf['development']  %>
+#SBATCH -t 00:05:00
+<% else  %>
+#SBATCH -t 24:00:00
+<% end  %>
+#SBATCH -A <%=params[:project]%> 
+
+#$ -N parsimonate_<%=params[:exp_name_run_num]%>
+#$ -pe 1way <%=params[:num_tasks]%>
+<% if @conf['development']  %>
+#$ -q development
+<% else  %>
+#$ -q normal
+<% end  %>
+#$ -o $JOB_NAME.o$JOB_ID
+#$ -j y
+<% if @conf['development']  %>
+#$ -l h_rt=00:01:00
+<% else  %>
+#$ -l h_rt=24:00:00
+<% end  %>
+#$ -V
+#$ -cwd
+#$ -A <%=params[:project]%> 
+#------------------------------------------------------
+#
+
+#Check for input trees and read them in
+num_trees=`(/bin/ls *.nw | wc -l ) 2> /dev/null`
+if [ "$num_trees" -gt "0" ]; then
+  #Build array of file names
+  input_trees=( $(/bin/ls *.nw) )
+fi
+
+port=<%=@conf['local_port']%> 
+user=<%=@conf['local_user']%> 
+machine=<%=@conf['local_machine']%> 
+path=<%=params[:local_parsimony_dir]%> 
+light_submitter=<%=params[:light_submitter]%> 
+
+
+#Loop over parsimonator runs
+let j=0
+while [ "$j" -lt "<%=params[:num_pars_runs]%>" ]
+do
+  #Create the seed
+  let seed=j+<%=params[:base]%>*<%=params[:max_runs_node]%>
+
+  #Determine if we need input trees
+  if [ "$num_trees" -gt "0" ]; then
+    #let tree_index=seed/<%=params[:num_ptrees]%>
+    let tree_index=seed%<%=params[:num_bestML_trees]%> 
+    tree_arg="-t ${input_trees[$tree_index]}"
+    echo "Using tree ${tree_arg}"
+  else
+    tree_arg=""
+  fi
+
+  #Format the seed and add 1(pasimonator won't accept a 0 seed)
+  seed_formatted=$(printf "%03d" "$seed")
+  let seed=seed+123
+  name="<%=params[:exp_name]%>_${seed_formatted}"
+  <%=params[:parsimonator]%> -s <%=params[:dataset_full_path]%> $tree_arg -n $name -p $seed &
+  let j=j+1
+done
+
+#Wait for all to finish
+wait
+ssh ${user}@${machine} -p $port ${light_submitter}
+

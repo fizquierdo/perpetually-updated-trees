@@ -1,0 +1,3 @@
+# Default configuration for installation
+bin_dir: /usr/local/bin                       # should be in $PATH
+install_dir: /opt/perpetualtree/githubsrc     # ruby library code, templates

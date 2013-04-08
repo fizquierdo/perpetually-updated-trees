@@ -1,0 +1,17 @@
+
+# This file must be edited
+# Environment
+development: false  # will submit the jobs to development queue (less than 1 min)
+debug: false  # just print out the info, dont send the jobs
+# Configuration for remote cluster 
+remote_machine: remote.machine.com
+remote_user: user_remotely
+remote_path: /path/to/your/remote/machine/analysis/dir 
+# Configuration of the local machine (transfer back results)
+local_port: port_number
+local_machine: machine.com
+local_user: user_locally
+# Configuration for local folders, root path is __FILE__ (where this file resides)
+templatedir: /path/to/your/templates # template_raxmllight.slurm.erb 
+cluster_spec: default.config.yml  
+mail_to: you@example.com
