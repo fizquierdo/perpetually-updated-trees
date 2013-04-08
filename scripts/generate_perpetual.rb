@@ -66,10 +66,10 @@ BUNCH=#{@best_bunch_size}
 CONF=#{standalone_config_name}
 
 # Execute standalone
-PLANTER --name #{@name} --initial-phy $INITIAL_PHY --parsi-size $PARSI --bunch-size $BUNCH --standalone-config-file $CONF 
+PLANTER_PATH --name #{@name} --initial-phy $INITIAL_PHY --parsi-size $PARSI --bunch-size $BUNCH --standalone-config-file $CONF 
 
 # Execute remotely
-# PLATER --name #{@name} --initial-phy $INITIAL_PHY --parsi-size $PARSI --bunch-size $BUNCH --standalone-config-file $CONF  --remote
+# PLANTER_PATH --name #{@name} --initial-phy $INITIAL_PHY --parsi-size $PARSI --bunch-size $BUNCH --standalone-config-file $CONF  --remote
 END_STARTER
   end
 
