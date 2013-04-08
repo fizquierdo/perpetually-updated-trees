@@ -148,4 +148,4 @@ iter_file=<%=params[:iteration_results_name]%>
 project_name=<%=params[:exp_name]%>
 tree_search_bunch_size=<%=params[:num_ptrees]%>
 
-ssh ${user}@${machine} -p $port PUT_FINISH $bunch $num_bestML_trees $mail_to $update_id $path $iter_file $project_name $tree_search_bunch_size 
+ssh ${user}@${machine} -p $port PLANTER_FINISH $bunch $num_bestML_trees $mail_to $update_id $path $iter_file $project_name $tree_search_bunch_size 

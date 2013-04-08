@@ -12,6 +12,7 @@ def generate_executable(basefile, execfile, bin_dir,  repl)
   FileUtils.rm execfile
 end
 
+
 desc "Install a ruby executable, copy current templates/configs"
 task :install do
   bin_dir = opts['bin_dir'] 
@@ -26,10 +27,10 @@ task :install do
 
   repl = [{:base => /LOAD_PATH\.unshift.+$/, :repl => %{LOAD_PATH.unshift "#{install_dir}/lib"}}]
   # main script
-  generate_executable("put.rb", "PUT", bin_dir, repl)
+  generate_executable("put.rb", "PLANTER", bin_dir, repl)
 
   # script for finalizing iterations 
-  generate_executable("scripts/finish_iteration.rb", "PUT_FINISH", bin_dir, repl)
+  generate_executable("scripts/finish_iteration.rb", "PLANTER_FINISH", bin_dir, repl)
 
   # the cluster and remote config and the templates related
   system "sudo cp config/cluster/default.config.yml #{install_dir}/templates"
@@ -47,8 +48,8 @@ task :install do
   generate_executable("scripts/summarize_results.rb", "summarize_results.rb", scriptdir, repl)
   # script for generation 
   repl = [{:base => /@install_path=.+$/, :repl => %{@install_path="#{install_dir}"}},
-          {:base => /^put:.+$/,          :repl => %{put: #{bin_dir}/PUT}}]
-  generate_executable("scripts/generate_perpetual.rb", "PUT_GENERATE", bin_dir, repl)
+          {:base => /^put:.+$/,          :repl => %{put: #{bin_dir}/PLANTER}}]
+  generate_executable("scripts/generate_perpetual.rb", "PLANTER_GENERATE", bin_dir, repl)
 end
 
 desc "show current configuration"
