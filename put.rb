@@ -191,7 +191,7 @@ if not opts[:update_phy].empty?
                                    :base_dir => update_dir, 
                                    :remote => opts[:remote],
                                    :update_id => next_id.to_i,
-                                   :num_threads => opts[:num_threads],
+                                   :num_threads => opts[:num_threads]
                                    ) 
 
     if updater.ready? 
