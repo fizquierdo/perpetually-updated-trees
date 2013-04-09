@@ -51,7 +51,7 @@ opts = Trollop::options do
   opt :bunch_size, "Number of best ML trees at the end of iteration ", :default => DEFAULT_NUM_BEST_ML_TREES
 
   opt :remote, "Use cluster resources on remote machine", :default => false
-  opt :outliers, "Use an outliers file to re-adapt alignment and trees at last iter of given experiment", :default => ""
+  #opt :outliers, "Use an outliers file to re-adapt alignment and trees at last iter of given experiment", :default => ""
 
   opt :num_threads, "number of threads", :default => ""
   opt :fake_phy, "first generate fake updates from initial", :default => ""
@@ -80,6 +80,7 @@ end
 
 list = ExperimentTable::ExperimentList.new(expfile)
 # Process newick and phylip files so that outliers 
+=begin
 if not opts[:outliers].empty?
   if opts[:name].empty? 
     puts "Specify the name of the enperiment with --name"
@@ -97,6 +98,7 @@ if not opts[:outliers].empty?
   end
   exit
 end
+=end
 
 # remove
 if not opts[:remove].empty?
@@ -186,11 +188,15 @@ if not opts[:update_phy].empty?
     puts "Starting update #{next_id}"
     list.update(opts[:name], "u#{next_id.to_s}", "start at #{Time.now}")
     update_dir = File.join e.dirname("output"), "bunch_#{next_id.to_s}"
+    cnf = YAML.load(File.read opts[:standalone_config_file])
     updater = TreeBunchStarter.new(:phylip => opts[:update_phy], 
                                    :prev_dir => last_dir,
                                    :base_dir => update_dir, 
                                    :remote => opts[:remote],
                                    :update_id => next_id.to_i,
+                                   :iteration_results_name => cnf['iteration_results_name'],
+                                   :best_ml_folder_name => cnf['best_ml_folder_name'],
+                                   :best_ml_bunch_name => cnf['best_ml_bunch_name'],
                                    :num_threads => opts[:num_threads]
                                    ) 
 
