@@ -20,15 +20,7 @@ log = PerpetualTreeExample::ExampleLogger.new File.expand_path(log_filename)
 FileUtils.mkdir_p opts['phlawd_working_dir'] 
 phlawd = PerpetualTreeExample::Phlawd.new(opts, log)
 # Check it PHLAWD has a database to work with
-db_dir = File.dirname opts['phlawd_database']
-if File.exist? db_dir
-  raise "Database #{opts['phlawd_database']} not found" unless File.exist?(opts['phlawd_database'])
-else
-  FileUtils.mkdir_p db_dir
-  Dir.chdir db_dir do
-    phlawd.setupdb 
-  end
-end
+raise "Database #{opts['phlawd_database']} not found" unless File.exist?(opts['phlawd_database'])
 fasta_alignment = File.join opts['phlawd_working_dir'], opts['first_fasta_alignment']
 
 log.info "### ITERATION 1 [INITIAL] ###"
