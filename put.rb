@@ -133,6 +133,13 @@ if not opts[:fake_phy].empty?
   end
   exit
 end
+# check partition file really exists
+if not opts[:partitions].empty? 
+  if not File.exist?(opts[:partitions])
+    puts "specify an existing partition file"
+    exit
+  end
+end
 # starter
 if not opts[:initial_phy].empty? 
   if not File.exist?(opts[:initial_phy])

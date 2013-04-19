@@ -102,6 +102,7 @@ class TreeBunchStarter
 
   def initialize(opts)
     @phylip = opts[:phylip]
+    @partition_file = opts[:partition_file]
     @base_dir = opts[:base_dir]
     @prev_dir = opts[:prev_dir]
     @update_id = opts[:update_id] || 0
@@ -161,6 +162,7 @@ class TreeBunchStarter
       logput "Copying new update alignment (not expanding) from #{@phylip} to #{@phylip_updated}"
       FileUtils.cp @phylip, @phylip_updated 
     end
+    FileUtils.cp @partition_file, @alignment_dir if File.exist? @partition_file
     ready
   end
   def start_iteration(opts)
@@ -178,7 +180,9 @@ class TreeBunchStarter
         logput "update iteration, looking for parsimony start trees from previous bunch\n----"
         phylip_dataset = @phylip_updated
         raise "prev bunch not ready #{@prev_bestML_bunch}" unless File.exist?(@prev_bestML_bunch)
-        # TODO decide how to deal with outliers, should be go here for the outliers? prune by default? it depends on what we did by default with PHLAWD, it shouhd be sufficient to call prune_taxa or a modified version thereof
+        # TODO decide how to deal with outliers, should be go here for the outliers? prune by default? 
+        # it depends on what we did by default with PHLAWD, 
+        # it shouhd be sufficient to call prune_taxa or a modified version thereof
         last_best_bunch = PerpetualNewick::NewickFile.new(@prev_bestML_bunch)
         last_best_bunch.save_each_newick_as(File.join(@parsimony_trees_dir, 'prev_parsi_tree'), "nw") 
         prev_trees = Dir.entries(@parsimony_trees_dir).select{|f| f =~ /^prev_parsi_tree/}
@@ -192,7 +196,7 @@ class TreeBunchStarter
       if @remote
         logput "Exp #{opts[:exp_name]}, your cluster will take care of this iteration no #{@update_id}"
         c = CycleController.new(:update_id => @update_id, 
-	                        :phy => phylip_dataset, 
+	                              :phy => phylip_dataset, 
                                 :num_parsi_trees => num_parsi_trees, 
                                 :num_ptrees => num_iteration_trees, 
                                 :prev_trees_paths => prev_trees_paths, 
@@ -212,14 +216,14 @@ class TreeBunchStarter
         logput "****** Start iteration no #{@update_id} ********"
         logput "step 1 of 2 : Parsimony starting trees #{num_parsi_trees} each\n----"
         if opts[:initial_iteration]
-	  generate_parsimony_trees(num_parsi_trees)
+	        generate_parsimony_trees(num_parsi_trees)
           parsimony_trees_dir = @parsimony_trees_dir
         else
           update_parsimony_trees(num_parsi_trees, prev_trees)
           parsimony_trees_dir = @parsimony_trees_out_dir
         end
         logput "step 2 of 2 : ML trees\n----"
-        best_lh = generate_ML_trees(parsimony_trees_dir, phylip_dataset, num_bestML_trees)
+        best_lh = generate_ML_trees(parsimony_trees_dir, phylip_dataset, num_bestML_trees, @partition_file)
         logput "Bunch of initial ML trees #{num_bestML_trees}, ready at #{@bestML_bunch}\n----"
         best_lh
       end
@@ -231,6 +235,7 @@ class TreeBunchStarter
   def search_std(num_gamma_trees = nil)
         search_opts = {
           :phylip => @phylip,
+          :partition_file => @partition_file,
           :outdir => @ml_trees_dir,
           :num_gamma_trees => num_gamma_trees || 1, 
           :stderr => File.join(@ml_trees_dir, "err"),
@@ -314,7 +319,7 @@ class TreeBunchStarter
         logput "Done with parsimony trees of #{parsi_start_tree}, #{i+1} of #{trees.size}"
       end 
     end
-    def generate_ML_trees(starting_trees_dir, phylip, num_bestML_trees)
+    def generate_ML_trees(starting_trees_dir, phylip, num_bestML_trees, partition_file)
     starting_trees = Dir.entries(starting_trees_dir).select{|f| f =~ /^RAxML_parsimonyTree/}
     raise "no starting trees available" if starting_trees.nil? or starting_trees.size < 1
     logput "LOCAL: #{starting_trees.size} starting trees to be used"
@@ -325,6 +330,7 @@ class TreeBunchStarter
       tree_id = parsimony_tree.split("parsimonyTree.").last
       light_opts = {
         :phylip => phylip,
+        :partition_file => partition_file,
         :outdir => @ml_trees_dir,
         :flags => " -D ", # default to a RF convergence criterion
         :starting_newick => File.join(starting_trees_dir, parsimony_tree),
@@ -343,6 +349,7 @@ class TreeBunchStarter
       logput "Scoring tree #{nni_starting_tree}"
       scorer_opts = {
         :phylip => phylip,
+        :partition_file => partition_file,
         :outdir => @ml_trees_dir,
         :starting_newick => nni_starting_tree,
         :stderr => File.join(@ml_trees_dir, "err_score_#{tree_id}"),
