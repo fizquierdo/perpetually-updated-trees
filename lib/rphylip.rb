@@ -1,6 +1,5 @@
 #!/usr/bin/env ruby
 
-
 module PerpetualRandomHelpers
   def fisher_yates_shuffle(a)
     (a.size-1).downto(1) do |i|
@@ -19,6 +18,7 @@ module PerpetualRandomHelpers
 end
 
 module PerpetualPhylip
+  # TODO cleanup, most of this was prototype-testing code
   class Phylip
     include PerpetualRandomHelpers
     attr_reader :numtaxa, :seqlen, :seqs
@@ -146,4 +146,90 @@ module PerpetualPhylip
     end
   end
 
+end
+
+
+# TODO refactor this so we use only one module
+module MultiPartition
+  class Phylip  
+    attr_accessor :numtaxa, :seqlen, :seqs, :filename
+    def initialize(filename)
+      raise "File #{filename} does not exist" unless File.exists?(filename)
+      lines = File.open(filename).readlines
+      @filename = filename
+      @numtaxa, @seqlen = lines[0].split.map{|w| w.to_i}
+      lines.delete_at(0)
+      lines.delete_if{|l| l=~ /^\s+$/}
+      @seqs = {}
+      lines.each do |line|
+        name, seq = line.chomp.split
+        if taxa_names.include?(name)
+          puts "#{taxa_names.size} taxa names parsed"
+          puts "#{name} Taxon name already exists, skipping" 
+          next
+        end
+        @seqs[name] = seq
+      end
+      raise "Parsed #{@seqs.size} expected ntaxa #{@numtaxa}" unless taxa_names.size == @numtaxa
+    end
+    def taxa_names
+      @seqs.keys.sort
+    end
+  end
+
+  class Partition
+    def initialize(from, to, name)
+      @from = from
+      @to = to
+      @name = File.basename(name)
+    end
+    def to_s
+      "DNA, #{@name} = #{@from} - #{@to}"
+    end
+  end
+
+  class SpeciesPhylip
+    def initialize(first_phylip)
+      @base = first_phylip
+      @partitions = []
+      @partitions << Partition.new(1, @base.seqlen, @base.filename)
+    end
+    def concat_phylip(new_phylip)
+      missing = (@base.taxa_names - new_phylip.taxa_names)
+      new = (new_phylip.taxa_names - @base.taxa_names)
+      total = (@base.taxa_names + new_phylip.taxa_names).uniq
+      both = total - missing - new
+      puts "missing #{missing.size}"
+      puts "new #{new.size}"
+      puts "both #{both.size}"
+      puts "total #{total.size}"
+      raise "total taxa unexpected" unless total.size == both.size + missing.size + new.size
+      # edit the sequences
+      both.each{|taxon| @base.seqs[taxon] += new_phylip.seqs[taxon]}
+      missing.each{|taxon| @base.seqs[taxon] += "-" * new_phylip.seqlen}
+      new.each{|taxon| @base.seqs[taxon] = "-" * @base.seqlen + new_phylip.seqs[taxon]}
+      # update the partitions
+      from = @base.seqlen + 1 
+      to =  @base.seqlen + new_phylip.seqlen
+      @partitions << Partition.new(from, to, new_phylip.filename)
+      # update the header
+      @base.seqlen += new_phylip.seqlen
+      @base.numtaxa = total.size 
+      @base.filename = "species"
+    end
+    def print_partitions
+      @partitions.each{|p| puts p.to_s}
+    end
+    def save
+      File.open("species.phy", "w+") do |f|
+        f.puts "#{@base.numtaxa} #{@base.seqlen}"
+        @base.seqs.each_pair do |taxon_name, seq|
+          f.puts "#{taxon_name} #{seq}"
+        end
+      end
+      File.open("species.model", "w+") do |f|
+        @partitions.each{|p| f.puts p.to_s}
+      end
+    end
+  end
 end

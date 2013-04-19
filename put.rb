@@ -47,6 +47,7 @@ opts = Trollop::options do
 
   opt :initial_phy, "initial alignment", :default => ""
   opt :update_phy, "update with a new update", :default => ""
+  opt :partitions, "run partitioned search with file", :default => ""
   opt :parsi_size, "Number of new parsimony trees", :default => DEFAULT_NUM_NEW_PARSI_TREES
   opt :bunch_size, "Number of best ML trees at the end of iteration ", :default => DEFAULT_NUM_BEST_ML_TREES
 
@@ -144,6 +145,7 @@ if not opts[:initial_phy].empty?
   cnf = YAML.load(File.read opts[:standalone_config_file])
   puts "starting a tree bunch #{base_dir}"
   starter = TreeBunchStarter.new(:phylip => opts[:initial_phy], 
+                                 :partition_file => opts[:partitions],
                                  :num_threads => opts[:num_threads],
                                  :remote => opts[:remote],
                                  :remote_config_file => opts[:remote_config_file],
@@ -190,6 +192,7 @@ if not opts[:update_phy].empty?
     update_dir = File.join e.dirname("output"), "bunch_#{next_id.to_s}"
     cnf = YAML.load(File.read opts[:standalone_config_file])
     updater = TreeBunchStarter.new(:phylip => opts[:update_phy], 
+                                   :partition_file => opts[:partitions],
                                    :prev_dir => last_dir,
                                    :base_dir => update_dir, 
                                    :remote => opts[:remote],
