@@ -78,6 +78,7 @@ class CycleController
       Net::SCP.start(@conf['remote_machine'], @conf['remote_user']) do |scp|
         #send the alignment
         scp.upload! @opts[:phy], @opts[:alignment_remote_dir]
+        scp.upload! @opts[:partition_file], @opts[:alignment_remote_dir] if File.exist? @opts[:partition_file]
         # send the starting trees
         unless @opts[:prev_trees_paths].nil?
     	  @opts[:prev_trees_paths].each do |path| 
@@ -196,7 +197,8 @@ class TreeBunchStarter
       if @remote
         logput "Exp #{opts[:exp_name]}, your cluster will take care of this iteration no #{@update_id}"
         c = CycleController.new(:update_id => @update_id, 
-	                              :phy => phylip_dataset, 
+	                        :phy => phylip_dataset, 
+	                        :partition_file => @partition_file, 
                                 :num_parsi_trees => num_parsi_trees, 
                                 :num_ptrees => num_iteration_trees, 
                                 :prev_trees_paths => prev_trees_paths, 
@@ -210,6 +212,7 @@ class TreeBunchStarter
                                 :iteration_results_name => @iteration_results_name, 
                                 :exp_name => opts[:exp_name]
                                )
+        
 	c.run_as_batch_remote # send prev_trees to remote machine!
         "cluster"
       else

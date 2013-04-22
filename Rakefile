@@ -19,6 +19,7 @@ def replace_in_file(basefile, newfile, repl)
 end
 
 def generate_executable(basefile, execfile, bin_dir,  repl)
+  puts "Generating #{execfile}"
   replace_in_file basefile, execfile, repl
   system "chmod +x #{execfile}"
   syscopy execfile, File.join(bin_dir,execfile)
@@ -58,7 +59,9 @@ task :install do
   # the basic example
   generate_executable("scripts/run_perpetual_example.rb", "run_perpetual_example.rb", scriptdir, repl)
   # the data for the example
-  syscopy "testdata/*", datadir
+  puts "Copying testdata"
+  #syscopy "testdata/*", datadir
+  puts "Copying done"
   # the iteration summarizer 
   generate_executable("scripts/summarize_results.rb", "summarize_results.rb", scriptdir, repl)
   # script for generation 
