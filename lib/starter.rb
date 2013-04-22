@@ -52,20 +52,26 @@ class CycleController
    required_MB.to_i
   end
 
-  def build_batch_options(dataset_name)
+  def build_batch_options(dataset_filename, model_filename)
     raise "User Number of parsimony trees not set" unless @opts[:num_parsi_trees] > 0
     raise "Total Number of parsimony trees not set" unless @opts[:num_ptrees] > 0
     raise "Number of best ML trees not set" unless @opts[:num_bestML_trees] > 0
     # for parsimonator
     @opts[:parsimony_memory_requirements] = parsimonator_requirements
     @opts[:raxml_memory_requirements] = raxmllight_requirements
-    @opts[:dataset_full_path] = File.join(@opts[:alignment_remote_dir], dataset_name)
+    dataset_full_path = File.join(@opts[:alignment_remote_dir], dataset_filename)
+    @opts[:dataset_full_path] = dataset_full_path
+    # for raxmllight / std-raxml
+    if model_filename.nil? or model_filename.empty?
+      @opts[:dataset_args] = " -s #{dataset_full_path} "
+    else
+      model_full_path = File.join(@opts[:alignment_remote_dir], model_filename)
+      @opts[:dataset_args] = " -s #{dataset_full_path} -q #{model_full_path} "
+    end
     @opts[:base_dir] = @conf['remote_path']
-
   end
 
   def run_as_batch_remote
-    dataset_name = File.basename(@opts[:phy])
     unless @conf['debug']
       # Prepare iteration data
       Net::SSH.start(@conf['remote_machine'], @conf['remote_user']) do |ssh|
@@ -89,7 +95,7 @@ class CycleController
       end
     end
     # Now use Jobber to populate a template and send it
-    build_batch_options(dataset_name) 
+    build_batch_options(File.basename(@opts[:phy]), File.basename(@opts[:partition_file])) 
     joberator = PerpetualRemoteJob::Jobber.new(@opts, @conf)
     joberator.run_pipeline 
     @log.info "\n\n Finished remote submission"

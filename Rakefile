@@ -59,9 +59,9 @@ task :install do
   # the basic example
   generate_executable("scripts/run_perpetual_example.rb", "run_perpetual_example.rb", scriptdir, repl)
   # the data for the example
-  puts "Copying testdata"
-  #syscopy "testdata/*", datadir
-  puts "Copying done"
+  #puts "Copying testdata"
+  syscopy "testdata/*", datadir
+  #puts "Copying done"
   # the iteration summarizer 
   generate_executable("scripts/summarize_results.rb", "summarize_results.rb", scriptdir, repl)
   # script for generation 

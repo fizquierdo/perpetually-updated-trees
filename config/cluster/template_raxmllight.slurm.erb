@@ -68,7 +68,7 @@ if [ ! -e RAxML_info.${name}.0 ]; then
   echo "0" >| ${run_count}
   echo "Initial run of ${name} "
   # Original run
-${job_starter} <%=params[:binary]%> -s <%=params[:dataset_full_path]%> -m GTRCAT -D -t ${parsimony_tree} $thread_flag -n ${name}.0 
+${job_starter} <%=params[:binary]%> <%=params[:dataset_args]%> -m GTRCAT -D -t ${parsimony_tree} $thread_flag -n ${name}.0 
 
   # The latest result file should always be available to raxmlhpc for scoring
   #Copy the result file to the default result file name for the raxmlHPC step
@@ -114,7 +114,7 @@ else
   echo "${countp1}" >| ${run_count}
 
   #Start RAxML with the checkpoint file
-  ${job_starter} <%=params[:binary]%> -s <%=params[:dataset_full_path]%> -m GTRCAT -D -R ${ckpt_file} $thread_flag -n ${name}.${countp1}
+  ${job_starter} <%=params[:binary]%> <%=params[:dataset_args]%> -m GTRCAT -D -R ${ckpt_file} $thread_flag -n ${name}.${countp1}
 
   # The latest result file should always be available to raxmlhpc for scoring
   #Copy the result file to the default result file name for the raxmlHPC step
@@ -124,7 +124,7 @@ fi
 
 # Now the file has finished and we can score the resultss
 scoring_name=SCORING_${name}
-<%=params[:raxmlHPC_pthreads]%> -s <%=params[:dataset_full_path]%> -m GTRGAMMA -f J -t RAxML_result.${name} $thread_flag -n ${scoring_name}
+<%=params[:raxmlHPC_pthreads]%> <%=params[:dataset_args]%> -m GTRGAMMA -f J -t RAxML_result.${name} $thread_flag -n ${scoring_name}
 
 port=<%=@conf['local_port']%> 
 user=<%=@conf['local_user']%> 
