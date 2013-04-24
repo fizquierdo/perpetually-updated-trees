@@ -11,7 +11,7 @@ module PerpetualPhlawd
       @valid = validate
     end
     def print_error_msgs(prefix)
-      @error_msgs.each {|m| puts prefix + m}
+      @error_msgs.each {|m| $stderr.puts prefix + m}
     end
     def run_initial
       # Ensure runfile exists
@@ -55,21 +55,28 @@ module PerpetualPhlawd
     end
     def print_instances
       @instances.each do |instance|
-        puts instance.gene_name
+        $stderr.puts instance.gene_name
         if instance.valid
-          puts "  OK"
+          $stderr.puts "  OK"
         else
-          puts "  Validation errors:"
+          $stderr.puts "  Validation errors:"
           instance.print_error_msgs("\t")
         end
-        puts "=="
+        $stderr.puts "=="
       end
     end
     def run_initial
+      fasta_alignments = []
       # Run phlawd sequentially
-      valid_instances.each {|instance| instance.run_initial}  
-      # Concatenate all instance results
-      # TODO with concat
+      valid_instances.each do |instance| 
+        instance.run_initial unless File.exist? instance.expected_result_file 
+        if File.exist? instance.expected_result_file
+          fasta_alignments << instance.expected_result_file
+        else
+          $stderr.puts "PHLAWD did not generate #{instance.expected_result_file}"
+        end
+      end
+      fasta_alignments 
     end
     private
     def valid_instances

@@ -189,8 +189,9 @@ module MultiPartition
   end
 
   class SpeciesPhylip
-    def initialize(first_phylip)
+    def initialize(first_phylip, name = "species")
       @base = first_phylip
+      @name = name
       @partitions = []
       @partitions << Partition.new(1, @base.seqlen, @base.filename)
     end
@@ -215,19 +216,19 @@ module MultiPartition
       # update the header
       @base.seqlen += new_phylip.seqlen
       @base.numtaxa = total.size 
-      @base.filename = "species"
+      @base.filename = @name
     end
     def print_partitions
       @partitions.each{|p| puts p.to_s}
     end
     def save
-      File.open("species.phy", "w+") do |f|
+      File.open("#{@name}.phy", "w+") do |f|
         f.puts "#{@base.numtaxa} #{@base.seqlen}"
         @base.seqs.each_pair do |taxon_name, seq|
           f.puts "#{taxon_name} #{seq}"
         end
       end
-      File.open("species.model", "w+") do |f|
+      File.open("#{@name}.model", "w+") do |f|
         @partitions.each{|p| f.puts p.to_s}
       end
     end
