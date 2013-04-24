@@ -19,7 +19,7 @@ log_filename = opts['example_log_file_name'] || "perpetual.log"
 log = PerpetualTreeUtils::MultiLogger.new File.expand_path(log_filename)
 
 # Relevant data for PHLAWD (first assume 1 instance)
-wdir =  File.join opts['phlawd_working_dir']
+wdir =  File.expand_path opts['phlawd_working_dir']
 phlawd = PerpetualPhlawd::Phlawd.new(opts['phlawd_binary'], wdir, log)
 phlawd.print_instances
 
@@ -44,7 +44,7 @@ end
 
 # concatenate into one single phylip
 raise "No phylip alignment available" if phylip_alignments.empty?
-msa_name = "phlawd_aln_t#{Time.now.to_i}"
+msa_name = opts['run_name'] + Time.now.to_i.to_s
 first_phylip = MultiPartition::Phylip.new phylip_alignments.shift
 log.info "Building alignment called #{msa_name}"
 msa = MultiPartition::SpeciesPhylip.new(first_phylip, msa_name)
@@ -54,10 +54,20 @@ phylip_alignments.each do |phylip_filename|
 end
 msa.save
 
+# Move input dataset to phlawd working folder
+aln = "#{msa_name}.phy" 
+part = "#{msa_name}.model"
+
+FileUtils.mv aln, wdir
+FileUtils.mv part, wdir
+
+aln = File.join wdir, aln
+part = File.join wdir, part
+
 # Run iteration 1 of Raxml searches
 log.info "### SEARCH ITERATION 1 [INITIAL] ###"
 log.info "Using #{opts['put']}"
-cmd = "#{opts['put']} --name #{opts['run_name']} --initial-phy #{msa_name}.phy --partitions #{msa_name}.model --parsi-size #{opts['parsimony_starting_size']} --bunch-size #{opts['best_bunch_size']} --standalone-config-file #{config_file}"
+cmd = "#{opts['put']} --name #{opts['run_name']} --initial-phy #{aln} --partitions #{part} --parsi-size #{opts['parsimony_starting_size']} --bunch-size #{opts['best_bunch_size']} --standalone-config-file #{config_file}"
 cmd += " --remote" if remote
 log.systemlog cmd
 log.info("First iteration launched")
