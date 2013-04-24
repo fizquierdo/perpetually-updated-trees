@@ -1,9 +1,0 @@
-clade = Lonicera
-search = rbcL
-gene = rbcL
-mad =  0.05
-coverage = 0.2
-identity = 0.2
-db = /home/Fernando/perpetualtree/github/perpetually-updated-trees/testinstall/perpetualinstall/data/pln.db
-knownfile = /home/Fernando/perpetualtree/github/perpetually-updated-trees/testinstall/perpetualinstall/data/rbcL.keep 
-numthreads = 2
