@@ -4,6 +4,6 @@ gene = rbcL
 mad =  0.05
 coverage = 0.2
 identity = 0.2
-db = pln.db
+db = ../../GenBank/pln.db 
 knownfile = rbcL.keep 
 numthreads = 2

@@ -10,7 +10,7 @@ require 'fileutils'
 
 
 class ProjectData
-  attr_reader :name, :remote_config_file_name, :install_path, :phlawd_name
+  attr_reader :name, :remote_config_file_name, :install_path
   def initialize(name, best_bunch_size, parsimony_starting_size, initial_phylip = nil)
     @install_path="/opt/perpetualtree" # defined in the local config file
     @name = name
@@ -21,13 +21,8 @@ class ProjectData
     @best_bunch_name = "best_bunch.nw" 
     @iteration_results_name = "iteration_results.txt" 
     # phlawd specific
-    @phlawd_name = name
-    @phlawd_name = name.split("_").first if name.include?("example")
     @phlawd_binary = "PHLAWD"
     @phlawd_autoupdate_info = "update_info"
-    test_phlawd = "#{@install_path}/data"
-    @phlawd_keep = "#{test_phlawd}/#{@phlawd_name}.keep"
-    @phlawd_database = "#{test_phlawd}/pln.db" 
   end
   def check_input
     # Make sure the initial phylip is there
@@ -68,40 +63,30 @@ CONF=#{standalone_config_name}
 # Execute standalone
 PLANTER_PATH --name #{@name} --initial-phy $INITIAL_PHY --parsi-size $PARSI --bunch-size $BUNCH --standalone-config-file $CONF 
 
-# Execute remotely
-# PLANTER_PATH --name #{@name} --initial-phy $INITIAL_PHY --parsi-size $PARSI --bunch-size $BUNCH --standalone-config-file $CONF  --remote
+# Execute remotely with --remote
+# Configure remote.config.yml
 END_STARTER
   end
 
   def standalone_config_content
 standalone_config = <<END_STANDALONE
 run_name: #{@name}
-first_fasta_alignment: #{@phlawd_name}.FINAL.aln.rn
 parsimony_starting_size: #{@parsimony_starting_size}
 best_bunch_size: #{@best_bunch_size}
+
+# Logs the alignment extensions and iteration restarts
 updates_log: #{File.join project_dir, 'updates.log'}
 
-# All the output will be written here
+# All the output will be written here (do not change)
 experiments_file: #{File.expand_path 'experiments.yml'}
 experiments_folder: #{experiments_dir}
 remote_config_file: #{File.expand_path @remote_config_file_name}
 # Uncomment to true if the remote configuration should be used for the searches
 # remote: true 
 
-# Full path for PHLAWD v 3.3.
-phlawd_name: #{@phlawd_name}
-phlawd_binary: #{@phlawd_binary}
-# Full path for original seed sequences
-phlawd_keep: #{@phlawd_keep}
-# Full path for database to be used (if not generated)
-phlawd_database: #{@phlawd_database} 
-# phlawd_database: #{phlawd_working_dir}/../phlawd_db/#{File.basename @phlawd_database} # use this to generate a new one
-# Full path for output of phlawd
-phlawd_working_dir: #{phlawd_working_dir}
-phlawd_autoupdater: #{@install_path}/scripts/autoupdate_phlawd_db.py
-phlawd_autoupdate_info: #{@phlawd_autoupdate_info}
+#{phlawd_configuration}
 
-# Working dir for raxml pipeline
+# Executable
 put: /usr/bin/PUT
 
 # Do not change
@@ -148,14 +133,28 @@ END_CRON
   end
 
   protected
-  def phlawd_working_dir
+  def phlawd_configuration
     if @initial_phylip
-      wdir = File.dirname(@initial_phylip)
+      phlawd_config_str = ""
     else
-      wdir = "phlawd_alignments"
-      FileUtils.mkdir_p wdir
+      # prepare some sample data
+      basedir = "alignments"
+      FileUtils.cp_r "#{@install_path}/testdata/#{basedir}", basedir
+      phlawd_working_dir = File.expand_path(File.join basedir, "phlawd")
+      phlawd_database = File.expand_path(File.join basedir, "GenBank")
+      phlawd_config_str = <<END_PHLAWD_CONF
+# Generic PHLAWD configuration
+# Full path for PHLAWD v 3.3.
+phlawd_binary: #{@phlawd_binary}
+# Full path for database to be used 
+phlawd_database: #{phlawd_database} 
+# Full path for output of phlawd
+phlawd_working_dir: #{phlawd_working_dir}
+phlawd_autoupdater: #{@install_path}/scripts/autoupdate_phlawd_db.py
+phlawd_autoupdate_info: #{@phlawd_autoupdate_info}
+END_PHLAWD_CONF
     end
-    File.expand_path wdir
+    phlawd_config_str
   end
   def experiments_dir
     File.expand_path "experiments"
@@ -169,10 +168,10 @@ END_CRON
 end
 
 usage = "#{$0} project_name best_bunch_size parsimony_starting_size [initial_phylip]
-          \n For a fast example generating a example run searching for rbcL
-          \n #{$0} example "
+          \n For a fast example generating a pipeline run searching for rbcL
+          \n #{$0} pipeline "
 
-if ARGV.size == 1 and ARGV.first == "example"
+if ARGV.size == 1 and ARGV.first == "pipeline"
   name = "rbcL_example_#{Time.now.to_i}"
   best_bunch_size = 1
   parsimony_starting_size = 3

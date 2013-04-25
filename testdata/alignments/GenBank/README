@@ -1,0 +1,10 @@
+# Generate an initial Genbank DB for plant division pln.db
+PHLAWD setupdb db.setup
+
+# TODO
+# autoupdate.py currently uses the id for plants hard-coded
+# autoupdate.py currently uses a single string as search term
+
+# autoupdate.py should read db.update to decide when pln.db should be updated
+# search = gene1, gene2, gene3, 
+# building autoupdate SQL: select ... where desc like gene1 or gene2 or ...

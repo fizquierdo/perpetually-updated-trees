@@ -35,7 +35,7 @@ task :install do
   templatedir = File.join install_dir, "templates"
   scriptdir   = File.join install_dir, "scripts"
   libdir      = File.join install_dir, "lib"
-  datadir     = File.join install_dir, "data"
+  datadir     = File.join install_dir, "data" # TODO not sure you need this
   [bin_dir, install_dir, templatedir, libdir, scriptdir, datadir].each{|dir| sysmkdir dir}
   raise "Path for binaries bin_path not available in config file" if bin_dir.nil? 
   raise "#{bin_dir} not found" unless File.exist? bin_dir
@@ -60,7 +60,8 @@ task :install do
   generate_executable("scripts/run_perpetual_example.rb", "run_perpetual_example.rb", scriptdir, repl)
   # the data for the example
   #puts "Copying testdata"
-  syscopy "testdata/*", datadir
+  #syscopy "testdata/*", datadir
+  FileUtils.cp_r "testdata", install_dir
   #puts "Copying done"
   # the iteration summarizer 
   generate_executable("scripts/summarize_results.rb", "summarize_results.rb", scriptdir, repl)

@@ -38,7 +38,7 @@ module PerpetualTreeMaker
       @binary_path = opts[:binary_path] || File.expand_path(File.join(File.dirname(__FILE__),"../bin"))
       @flags = opts[:flags] || ""
       @ops = "-s #{@phylip} -n #{@name} #{@flags}"
-      @ops += " -q #{opts[:partition_file]} " unless opts[:partition_file].nil?  
+      @ops += " -q #{opts[:partition_file]} " unless opts[:partition_file].nil? or opts[:partition_file].empty? 
     end
     def before_run
       FileUtils.mkdir_p @outdir unless File.exist?(@outdir) 
