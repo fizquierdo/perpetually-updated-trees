@@ -19,13 +19,18 @@ log_filename = opts['example_log_file_name'] || "perpetual.log"
 log = PerpetualTreeUtils::MultiLogger.new File.expand_path(log_filename)
 
 # Relevant data for PHLAWD (first assume 1 instance)
-wdir =  File.expand_path opts['phlawd_working_dir']
-phlawd = PerpetualPhlawd::Phlawd.new(opts['phlawd_binary'], wdir, log)
+phlawd = PerpetualPhlawd::Phlawd.new(opts, log)
 phlawd.print_instances
 
 log.info "### PHLAWD ITERATION 1 [INITIAL] ###"
 # Run iteration 1 of PHLAWD (generate fasta_alignment)
 fasta_alignments = phlawd.run_initial 
+
+
+#TODO phlawd should know its own DB and search term
+updater = "#{opts['run_name']}_cron_phlawd_extender.sh"
+log.info "Generating updater of GenBank DB: #{updater}"
+phlawd.generate_genbank_autoupdate("pln.db", "rcbL", updater)
 
 if fasta_alignments.empty?
   puts "Nothing to work with"
@@ -58,9 +63,9 @@ msa.save
 aln = "#{msa_name}.phy" 
 part = "#{msa_name}.model"
 
+wdir = opts['phlawd_working_dir']
 FileUtils.mv aln, wdir
 FileUtils.mv part, wdir
-
 aln = File.join wdir, aln
 part = File.join wdir, part
 

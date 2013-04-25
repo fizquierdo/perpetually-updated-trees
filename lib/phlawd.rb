@@ -48,9 +48,9 @@ module PerpetualPhlawd
     end
   end
   class Phlawd
-    def initialize(phlawd_runner, working_dir, log)
-      @phlawd_runner = PhlawdRunner.new(log, phlawd_runner)
-      @working_dir = working_dir
+    def initialize(opts, log)
+      @opts = opts
+      @phlawd_runner = PhlawdRunner.new(log, @opts['phlawd_binary'])
       @instances = find_folder_instances
     end
     def print_instances
@@ -78,14 +78,36 @@ module PerpetualPhlawd
       end
       fasta_alignments 
     end
+    def generate_genbank_autoupdate(dbname, search, cronjob)
+
+      #update command
+      params = "#{@phlawd_runner.phlawd} #{search} #{dbname}.tmp #{dbname}"
+      cmd = "python #{@opts['phlawd_autoupdater']} #{params}"
+
+      # cronjob that calls the update command
+      database_dir = @opts['phlawd_database_dir']
+      phlawd_autoupdate_info = @opts['phlawd_autoupdate_info']
+      cronjob_path = File.join database_dir, cronjob
+      File.open(cronjob_path, "w") do |f| 
+        f.puts "# Move to the working dir to rebuild the database"
+        f.puts "cd #{database_dir}"
+        f.puts "# Log the stdout from the previous attempt"
+        f.puts "rm -rf taxdump.tar.*"
+        f.puts "date >> #{phlawd_autoupdate_info}.log"
+        f.puts "cat #{phlawd_autoupdate_info} >> #{phlawd_autoupdate_info}.log"
+        f.puts "# Edit accordingly and (optionally) call from a cronjob"
+        f.puts "(#{cmd} 2> update_err ) > #{phlawd_autoupdate_info} &"
+      end
+    end
     private
     def valid_instances
       @instances.select{|instance| instance.valid}
     end
     def find_folder_instances
+      working_dir = @opts['phlawd_working_dir']
       instances = []
-      Dir.entries(@working_dir).reject{|f| f=~ /^\.+$/}.each do |f|
-        path =  File.join @working_dir, f
+      Dir.entries(working_dir).reject{|f| f=~ /^\.+$/}.each do |f|
+        path =  File.join working_dir, f
         instances << PhlawdInstance.new(path, @phlawd_runner) 
       end
       instances

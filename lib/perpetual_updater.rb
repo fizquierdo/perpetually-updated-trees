@@ -3,8 +3,9 @@
 require "starter"
 require "experiment"
 require 'fileutils'
+require 'perpetual_utils'
 require 'logger'
-require 'example' # TODO example should not be part of this, now just to use fasta2phy
+require 'phlawd' # TODO example should not be part of this, now just to use fasta2phy
 
 module PerpetualTreeUpdater
 
@@ -17,7 +18,6 @@ class PerpetualProject
     @parsi_size = e[:parsi_size]
     @bunch_size = e[:bunch_size]
     @keys = e.keys 
-    @putbin = opts['put']
     @opts = opts
     @log ||= Logger.new opts['updates_log']
     @log.datetime_format = "%Y-%m-%d %H:%M:%S"
@@ -29,6 +29,8 @@ class PerpetualProject
     fasta_alignment = File.join dbdir, @opts['first_fasta_alignment']
     name = @opts['phlawd_name'] || @name
     autoupdate_info_file = @opts['phlawd_autoupdate_info'] || "update_info"
+    # TODO this should be done in the phlawd instance dir
+    # TODO re-write this part to support multi-gene inference from PHLAWD
     Dir.chdir dbdir do
       if File.exist?(autoupdate_info_file)
         key = File.open(autoupdate_info_file).readlines.last
@@ -47,7 +49,7 @@ class PerpetualProject
     phylip_alignment = fasta_alignment.to_s + label + ".phy"
     if File.exist?(fasta_alignment)
       @log.info "Found #{fasta_alignment}, generating #{label}"
-      PerpetualTreeExample::Fasta.new(fasta_alignment).to_phylip(phylip_alignment)
+      PerpetualTreeUtils::Fasta.new(fasta_alignment).to_phylip(phylip_alignment)
       FileUtils.mv(fasta_alignment, fasta_alignment + label) 
       FileUtils.mv(phylip_alignment,  @opts['phlawd_working_dir']) 
     end

@@ -141,13 +141,13 @@ END_CRON
       basedir = "alignments"
       FileUtils.cp_r "#{@install_path}/testdata/#{basedir}", basedir
       phlawd_working_dir = File.expand_path(File.join basedir, "phlawd")
-      phlawd_database = File.expand_path(File.join basedir, "GenBank")
+      phlawd_database_dir = File.expand_path(File.join basedir, "GenBank")
       phlawd_config_str = <<END_PHLAWD_CONF
 # Generic PHLAWD configuration
 # Full path for PHLAWD v 3.3.
 phlawd_binary: #{@phlawd_binary}
 # Full path for database to be used 
-phlawd_database: #{phlawd_database} 
+phlawd_database_dir: #{phlawd_database_dir} 
 # Full path for output of phlawd
 phlawd_working_dir: #{phlawd_working_dir}
 phlawd_autoupdater: #{@install_path}/scripts/autoupdate_phlawd_db.py
