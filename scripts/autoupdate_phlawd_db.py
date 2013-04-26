@@ -48,10 +48,10 @@ if __name__ == "__main__":
 		print "python autoupdate_phlawd_db.py phlawdlocation searchterm newdbname olddbname"
 		sys.exit(0)
 	phlawd_prog = sys.argv[1] 
-	gbdivision = "pln"       #just hardcoding plant , NOTE this could be a parameter
+	gbdivision = "pln"       #just hardcoding plant division 
 	searchterm = sys.argv[2] # for example rbcL 
-	newdbname = sys.argv[3]  #  temporary
-	olddbname = sys.argv[4]  #  for example the existing rbcL.db 
+	newdbname = sys.argv[3]  #  temporary, for example pln.db.tmp
+	olddbname = sys.argv[4]  #  for example the existing pln.db 
 
 	"""
 	need to write out the configuration file 

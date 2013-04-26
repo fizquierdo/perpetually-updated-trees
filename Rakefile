@@ -79,3 +79,13 @@ task :conf do
   end
 end
 
+desc "tutorial"
+task :tutorial, :parsi, :best do |t, args|
+  wdir = "tutorial"
+  args.with_defaults(:parsi => 3, :best => 1)
+  FileUtils.mkdir wdir
+  Dir.chdir(wdir) do 
+    system "../testinstall/bin/PLANTER_GENERATE loni #{args[:best]} #{args[:parsi]} ../testdata/lonicera_10taxa.rbcL.phy"
+  end
+end
+
