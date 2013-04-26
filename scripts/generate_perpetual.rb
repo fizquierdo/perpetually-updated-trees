@@ -84,6 +84,7 @@ remote_config_file: #{File.expand_path @remote_config_file_name}
 # Uncomment to true if the remote configuration should be used for the searches
 # remote: true 
 
+# Generated alignments should be here
 #{phlawd_configuration}
 
 # Executable
@@ -135,7 +136,9 @@ END_CRON
   protected
   def phlawd_configuration
     if @initial_phylip
-      phlawd_config_str = ""
+      wdir = File.expand_path("alignments")
+      FileUtils.mkdir wdir
+      phlawd_config_str = "phlawd_working_dir: #{wdir}"
     else
       # prepare some sample data
       basedir = "alignments"

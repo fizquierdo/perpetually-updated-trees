@@ -132,12 +132,12 @@ machine=<%=@conf['local_machine']%>
 path=<%=params[:local_ml_dir]%> 
 parsi_path=<%=params[:local_parsimony_dir]%> 
 
-# Send back the results to the local machine
-scp -P $port ${parsimony_tree} ${user}@${machine}:${parsi_path}
-for filename in RAxML_info.${name}.${countp1} RAxML_result.${name} RAxML_log.${name}.${countp1} RAxML_info.${scoring_name} RAxML_fastTreeSH_Support.${scoring_name} RAxML_fastTree.${scoring_name} 
-do
-  scp -P $port ${filename} ${user}@${machine}:${path}
-done
+# Send back the results to the local machine (of this individual run)
+#scp -P $port ${parsimony_tree} ${user}@${machine}:${parsi_path}
+#for filename in RAxML_info.${name}.${countp1} RAxML_result.${name} RAxML_log.${name}.${countp1} RAxML_info.${scoring_name} RAxML_fastTreeSH_Support.${scoring_name} RAxML_fastTree.${scoring_name} 
+#do
+#  scp -P $port ${filename} ${user}@${machine}:${path}
+#done
 
 # Now attempt to finish the iteration
 bunch=<%=params[:bestML_bunch]%>
@@ -148,4 +148,16 @@ iter_file=<%=params[:iteration_results_name]%>
 project_name=<%=params[:exp_name]%>
 tree_search_bunch_size=<%=params[:num_ptrees]%>
 
-ssh ${user}@${machine} -p $port PLANTER_FINISH $bunch $num_bestML_trees $mail_to $update_id $path $iter_file $project_name $tree_search_bunch_size 
+# Check how many other jobs have finished in total 
+num_trees=`tail RAxML_info.SCORING* | grep Final | wc -l`
+if [ ${tree_search_bunch_size} -eq ${num_trees} ]; then
+
+  # copy back all results to the local server
+  for filename in RAxML_info RAxML_result RAxML_log RAxML_fastTree 
+  do
+    scp -P $port ${filename}* ${user}@${machine}:${path}
+  done
+
+  # And finish the iteration in the local server
+  ssh ${user}@${machine} -p $port PLANTER_FINISH $bunch $num_bestML_trees $mail_to $update_id $path $iter_file $project_name $tree_search_bunch_size 
+fi

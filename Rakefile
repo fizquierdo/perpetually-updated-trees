@@ -81,7 +81,7 @@ end
 
 desc "tutorial"
 task :tutorial, :parsi, :best do |t, args|
-  wdir = "tutorial"
+  wdir = "tutorial2"
   args.with_defaults(:parsi => 3, :best => 1)
   FileUtils.mkdir wdir
   Dir.chdir(wdir) do 

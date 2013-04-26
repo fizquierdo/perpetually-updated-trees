@@ -114,6 +114,7 @@ class PerpetualProject
     alignments = Dir.entries(@opts['phlawd_working_dir']).select{|f| f =~ /^#{@name}.+\.phy$/}
     used = []
     used << @e[:initial_phy] if @keys.include?(:initial_phy)
+    # is this still required ? 
     update_phy_keys = @keys.select{|k| k =~ /^u[0-9]+_phy$/}
     update_phy_keys.each do |k|
       used << @e[k] 
@@ -126,11 +127,13 @@ class PerpetualProject
     end
   end
   def launch_update(alignment, log)
-    partition = alignment.gsub("\.phy", "\.model")
+    # check if the partition file exists (assumes it is .model) 
+    partition_file = File.join(@opts['phlawd_working_dir'], alignment.gsub("\.phy", "\.model"))
+    partition_file = "" unless File.exist? partition_file
     list = ExperimentTable::ExperimentList.new(@opts['experiments_file'])
     @log.info "Create an instance of the cycle starter"
     updater = TreeBunchStarter.new(:phylip => File.join(@opts['phlawd_working_dir'], alignment),
-                                   :partition_file => File.join(@opts['phlawd_working_dir'], partition),
+                                   :partition_file => partition_file,
                                    :prev_dir => last_folder,
                                    :base_dir => experiment_folder(next_iteration.to_s),
                                    :remote_config_file => @opts['remote_config_file'],
