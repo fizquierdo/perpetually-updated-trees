@@ -2,6 +2,7 @@
 $LOAD_PATH.unshift "/opt/perpetualtree/lib"
 require 'perpetual_evaluation'
 
+# This is a script to finalize and iplant iteration (remotely computed in stampede)
  
 begin
   # Assume the script is called externally with the correct arguments

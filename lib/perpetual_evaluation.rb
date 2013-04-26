@@ -152,6 +152,7 @@ class IterationFinisher
     File.dirname(@bestML_bunch)
   end
   def upload_iplant_tree(newick_file, name)
+   # TODO this is only relevant for iplant, should not be here
    tree_url = ""
 
    url = "http://portnoy.iplantcollaborative.org/parseTree"
