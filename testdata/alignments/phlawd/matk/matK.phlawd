@@ -1,0 +1,11 @@
+clade = Lonicera
+#clade = Dipsacales
+search = matK
+gene = matK
+mad = 0.1
+coverage = 0.4
+identity = 0.2
+db = ../../GenBank/pln.db
+knownfile = matK.keep
+numthreads = 10
+excludelistfile = exclude
