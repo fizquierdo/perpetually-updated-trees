@@ -8,6 +8,7 @@ module PerpetualPhlawd
       @path = path
       @gene_name = File.basename path # assume the gene name is the folder name 
       @error_msgs = []
+      @runconfig = {}
       @valid = validate
     end
     def print_error_msgs(prefix)
@@ -23,6 +24,13 @@ module PerpetualPhlawd
     def expected_result_file
       File.join @path, "#{@gene_name}.FINAL.aln.rn"
     end
+    def method_missing(meth, *args, &block)
+      if meth.to_s =~ /^lookup_(.+)$/
+        @runconfig[$1] || "Field #{$1} not found"
+      else
+        super
+      end
+    end
     private
     def validate
       has_runfile?
@@ -30,6 +38,11 @@ module PerpetualPhlawd
     def has_runfile?
       if File.exist? runfile
 	res = true
+        # update the config of the instance
+        File.open(runfile).each_line do |l|
+          field, value = l.chomp.split("=").map{|v| v.strip}
+          @runconfig[field] = value
+        end
       else
         @error_msgs << "No Runfile found (Missing #{runfile})" 
 	res = false
@@ -57,7 +70,9 @@ module PerpetualPhlawd
       @instances.each do |instance|
         $stderr.puts instance.gene_name
         if instance.valid
-          $stderr.puts "  OK"
+          $stderr.puts "  Validation OK"
+          $stderr.puts "    Clade: #{instance.lookup_clade}"
+          $stderr.puts "    Search terms: #{instance.lookup_search}"
         else
           $stderr.puts "  Validation errors:"
           instance.print_error_msgs("\t")
