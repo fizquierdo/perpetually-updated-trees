@@ -31,6 +31,15 @@ module PerpetualPhlawd
         super
       end
     end
+    def genbank_db_path
+      # assume we have an absolute path
+      dbpath = self.lookup_db
+      if dbpath =~ /^\.\./
+        basepath = File.dirname(runfile)  
+	dbpath = File.join basepath, dbpath
+      end
+      File.absolute_path dbpath 
+    end
     private
     def validate
       has_runfile?
@@ -93,10 +102,19 @@ module PerpetualPhlawd
       end
       fasta_alignments 
     end
-    def generate_genbank_autoupdate(dbname, search, cronjob)
+    def generate_genbank_autoupdate(cronjob)
+      # Plawd already knows the location of dbname, and can autogenerate the db.update
+
+      # find dbname
+      dbname = find_genbank_db
+      raise "Unable to find unique Genbank DB #{dbname}" unless File.exist? dbname
+ 
+      # TODO now generate this file 
+      # generate db.update
+
 
       #update command
-      params = "#{@phlawd_runner.phlawd} #{search} #{dbname}.tmp #{dbname}"
+      params = "#{@phlawd_runner.phlawd} #{dbupdate} #{dbname}.tmp #{dbname}"
       cmd = "python #{@opts['phlawd_autoupdater']} #{params}"
 
       # cronjob that calls the update command
@@ -115,6 +133,20 @@ module PerpetualPhlawd
       end
     end
     private
+    def find_genbank_db
+      # assume all instances use the same Genbank DB
+      dbnames = []
+      @instances.each do |instance|
+        dbnames << instance.genbank_db_path
+      end
+      if dbnames.uniq.size == 1
+        # the one and only path for the genbank DB
+        dbname = dbnames.first
+      else
+        # return all of them to report the conflict
+        dbname = dbnames.to_s
+      end
+    end
     def valid_instances
       @instances.select{|instance| instance.valid}
     end
