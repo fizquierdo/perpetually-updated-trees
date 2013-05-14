@@ -12,6 +12,8 @@ This will run the making of the new database in PHLAWD
 If the new database has enough additional sequences of
 viridiplantae and the searchterm then it will trigger 
 a phlawd update of the alignment
+
+UPDATE: now this will read a config file db.update to determine the target and the searchterms
 """
 
 dbconfigfile = "tempdb.config"
@@ -42,16 +44,45 @@ def count_searchterm_db(search,dbname):
 	c.close()
 	return count
 
+def get_id_for_name(cladename,dbname):
+	_id = None
+	conn = sqlite3.connect(dbname)
+	c = conn.cursor()
+	c.execute("select ncbi_id from taxonomy where name=?", (cladename,))
+	for j in c:
+		_id = int(j[0])
+	c.close()
+	return _id
 
 if __name__ == "__main__":
 	if len(sys.argv) != 5:
-		print "python autoupdate_phlawd_db.py phlawdlocation searchterm newdbname olddbname"
+		print "python autoupdate_phlawd_db.py phlawdlocation db.update newdbname olddbname"
 		sys.exit(0)
 	phlawd_prog = sys.argv[1] 
-	gbdivision = "pln"       #just hardcoding plant division 
-	searchterm = sys.argv[2] # for example rbcL 
-	newdbname = sys.argv[3]  #  temporary, for example pln.db.tmp
-	olddbname = sys.argv[4]  #  for example the existing pln.db 
+	newdbname = sys.argv[3]  #  temporary
+	olddbname = sys.argv[4]  #  for example the existing rbcL.db 
+	gbdivision = "pln"       #just hardcoding plant , NOTE this could be a parameter
+	#update for reading file
+	dbupdatefile = sys.argv[2] # for example db.update
+	dbuf = open(dbupdatefile,"r")
+	cladename = None
+	searchterms = None
+	for i in dbuf:
+		spls = i.strip().split("=")
+		if spls[0].strip().lower() == "clade":
+			cladename = spls[1].strip()
+		elif spls[0].strip().lower() == "search":
+			searchterms = spls[1].split(",")
+			for j in range(len(searchterms)):
+				searchterms[j] = searchterms[j].strip()
+	dbuf.close()
+	print "searching on",searchterms
+	idfortarget = get_id_for_name(cladename,olddbname)
+	if idfortarget == None:
+		print "the name",cladename,"was not found in the database"
+		sys.exit(0)
+	else:
+		print "matched",idfortarget,"to",cladename
 
 	"""
 	need to write out the configuration file 
@@ -68,22 +99,28 @@ if __name__ == "__main__":
 	cmd = phlawd_prog+" setupdb "+dbconfigfile
 	print cmd
 	os.system(cmd)    # takes around 1h 
-
-	"""
-	read the old database and get the number of sequences 
-	"""
-	count1 = count_searchterm_db(searchterm,olddbname)
-	"""
-	read the database and determine how many new sequences there
-	are in green plants given the search term
-	"""
-	count2 = count_searchterm_db(searchterm,newdbname)
 	
+	#update for multiple genes
+	totalcount1 = 0
+	totalcount2 = 0
+	for i in range(len(searchterms)):
+		"""
+		read the old database and get the number of sequences 
+		"""
+		count1 = count_searchterm_db(searchterms[i],olddbname)
+		"""
+		read the database and determine how many new sequences there
+		are in green plants given the search term
+		"""
+		count2 = count_searchterm_db(searchterms[i],newdbname)
+		totalcount1 += count1
+		totalcount2 += count2
+		
 	rebuild = False
-	if (count2 - count1) > 100:  # NOTE this 100 could be a parameter
+	if (totalcount2 - totalcount1) > 100:  # NOTE this 100 could be a parameter
 		rebuild = True
 	if rebuild:
-		print count2-count1,"new sequences that should be compared"	
+		print totalcount2-totalcount1,"new sequences that should be compared"	
 		"""
 		first mv the new database to the file of the old database
 		"""
@@ -92,7 +129,7 @@ if __name__ == "__main__":
 		os.system(cmd)
 		print "REBUILD REQUIRED"	
 	else:
-		print count2-count1,"new sequences, not enough"
+		print totalcount2-totalcount1,"new sequences, not enough"
 		cmd = "rm "+newdbname
 		print cmd
 		os.system(cmd)
