@@ -62,6 +62,7 @@ module PerpetualPhlawd
       File.join @path, "#{@gene_name}.phlawd"
     end
   end
+
   class PhlawdRunner
     attr_reader :phlawd, :log
     def initialize(log, phlawd)
@@ -69,12 +70,97 @@ module PerpetualPhlawd
       @log = log
     end
   end
+
+  class GenbankDB
+    attr_reader :dbname, :clade
+    def initialize(instances, opts)
+      @instances = instances
+      @opts = opts
+      @dbname = find_unique_db
+      raise "Unable to find unique Genbank DB #{@dbname}" unless File.exist? @dbname
+      @clade = ""
+    end
+    def generate_autoupdate(cronjob)
+ 
+      dbupdate = generate_dbupdate
+      return unless File.exist? dbupdate
+
+      #update command
+      params = "#{@opts['phlawd_binary']} #{dbupdate} #{@dbname}.tmp #{@dbname}"
+      cmd = "python #{@opts['phlawd_autoupdater']} #{params}"
+
+      # cronjob that calls the update command
+      database_dir = @opts['phlawd_database_dir']
+      phlawd_autoupdate_info = @opts['phlawd_autoupdate_info']
+      cronjob_path = File.join database_dir, cronjob
+      File.open(cronjob_path, "w") do |f| 
+        f.puts "# Move to the working dir to rebuild the database"
+        f.puts "cd #{database_dir}"
+        f.puts "# Log the stdout from the previous attempt"
+        f.puts "rm -rf taxdump.tar.*"
+        f.puts "date >> #{phlawd_autoupdate_info}.log"
+        f.puts "cat #{phlawd_autoupdate_info} >> #{phlawd_autoupdate_info}.log"
+        f.puts "# Edit accordingly and (optionally) call from a cronjob"
+        f.puts "(#{cmd} 2> update_err ) > #{phlawd_autoupdate_info} &"
+      end
+    end
+
+    private
+    def generate_dbupdate
+      dbupdate = ""
+      update_clades
+      if @clade.empty?
+        $stderr.puts "  Could not find a common clade for all instances"
+      else
+        basedir = File.dirname @dbname
+        dbupdate = File.join basedir, "db.update"
+        File.open(dbupdate, "w") do |f|
+	  f.puts "clade = #{@clade}"
+	  f.puts "search = #{search_terms}"
+	end
+      end
+      dbupdate
+    end
+    def search_terms
+      @instances.map{|i| i.lookup_search }.join(",")
+    end
+    def update_clades
+      @clade = ""
+      clades = []
+      @instances.each do |instance|
+        clades << instance.lookup_clade
+      end
+      if clades.uniq.size == 1
+        @clade = clades.first
+      end
+    end
+    def find_unique_db
+      # assume all instances use the same Genbank DB
+      dbnames = []
+      @instances.each do |instance|
+        dbnames << instance.genbank_db_path
+      end
+      if dbnames.uniq.size == 1
+        # the one and only path for the genbank DB
+        dbname = dbnames.first
+      else
+        # return all of them to report the conflict
+        dbname = dbnames.to_s
+      end
+    end
+  end
+
   class Phlawd
     def initialize(opts, log)
       @opts = opts
       @phlawd_runner = PhlawdRunner.new(log, @opts['phlawd_binary'])
       @instances = find_folder_instances
+      @genbank_db = GenbankDB.new(@instances, @opts) 
     end
+    def generate_genbank_autoupdate(cronjob)
+      @genbank_db.generate_autoupdate(cronjob)
+    end
+
     def print_instances
       @instances.each do |instance|
         $stderr.puts instance.gene_name
@@ -102,51 +188,7 @@ module PerpetualPhlawd
       end
       fasta_alignments 
     end
-    def generate_genbank_autoupdate(cronjob)
-      # Plawd already knows the location of dbname, and can autogenerate the db.update
-
-      # find dbname
-      dbname = find_genbank_db
-      raise "Unable to find unique Genbank DB #{dbname}" unless File.exist? dbname
- 
-      # TODO now generate this file 
-      # generate db.update
-
-
-      #update command
-      params = "#{@phlawd_runner.phlawd} #{dbupdate} #{dbname}.tmp #{dbname}"
-      cmd = "python #{@opts['phlawd_autoupdater']} #{params}"
-
-      # cronjob that calls the update command
-      database_dir = @opts['phlawd_database_dir']
-      phlawd_autoupdate_info = @opts['phlawd_autoupdate_info']
-      cronjob_path = File.join database_dir, cronjob
-      File.open(cronjob_path, "w") do |f| 
-        f.puts "# Move to the working dir to rebuild the database"
-        f.puts "cd #{database_dir}"
-        f.puts "# Log the stdout from the previous attempt"
-        f.puts "rm -rf taxdump.tar.*"
-        f.puts "date >> #{phlawd_autoupdate_info}.log"
-        f.puts "cat #{phlawd_autoupdate_info} >> #{phlawd_autoupdate_info}.log"
-        f.puts "# Edit accordingly and (optionally) call from a cronjob"
-        f.puts "(#{cmd} 2> update_err ) > #{phlawd_autoupdate_info} &"
-      end
-    end
     private
-    def find_genbank_db
-      # assume all instances use the same Genbank DB
-      dbnames = []
-      @instances.each do |instance|
-        dbnames << instance.genbank_db_path
-      end
-      if dbnames.uniq.size == 1
-        # the one and only path for the genbank DB
-        dbname = dbnames.first
-      else
-        # return all of them to report the conflict
-        dbname = dbnames.to_s
-      end
-    end
     def valid_instances
       @instances.select{|instance| instance.valid}
     end

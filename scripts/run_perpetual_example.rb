@@ -26,11 +26,9 @@ log.info "### PHLAWD ITERATION 1 [INITIAL] ###"
 # Run iteration 1 of PHLAWD (generate fasta_alignment)
 fasta_alignments = phlawd.run_initial 
 
-
-#TODO phlawd should know its own DB and search term
 updater = "#{opts['run_name']}_cron_phlawd_extender.sh"
 log.info "Generating updater of GenBank DB: #{updater}"
-phlawd.generate_genbank_autoupdate("pln.db", "rcbL", updater)
+phlawd.generate_genbank_autoupdate(updater)
 
 if fasta_alignments.empty?
   puts "Nothing to work with"

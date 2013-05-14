@@ -99,7 +99,7 @@ module PerpetualTreeUtils
     end
     def to_phylip(filename)
       # Ensure all seqs have the same width
-      raise "Not all sequences have the same width" unless @widths.size > 1 and @widths.uniq.size == 1
+      raise "Not all sequences have the same width" unless @widths.size > 0 and @widths.uniq.size == 1
       File.open(filename, "w") do |f|
         f.puts "#{@seqs.size} #{@widths.first.to_s}"
         @seqs.each{|s| f.puts s} 

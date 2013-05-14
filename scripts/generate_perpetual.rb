@@ -171,11 +171,11 @@ END_PHLAWD_CONF
 end
 
 usage = "#{$0} project_name best_bunch_size parsimony_starting_size [initial_phylip]
-          \n For a fast example generating a pipeline run searching for rbcL
+          \n For a fast example generating a pipeline run: 
           \n #{$0} pipeline "
 
 if ARGV.size == 1 and ARGV.first == "pipeline"
-  name = "rbcL_example_#{Time.now.to_i}"
+  name = "pipeline_#{Time.now.to_i}"
   best_bunch_size = 1
   parsimony_starting_size = 3
   initial_phylip = nil
