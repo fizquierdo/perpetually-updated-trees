@@ -21,6 +21,7 @@ class PerpetualProject
     @opts = opts
     @log ||=  PerpetualTreeUtils::MultiLogger.new opts['updates_log']
   end
+
   
   def import_phlawd_updates(update_key)
     # Now this is all 
@@ -30,21 +31,10 @@ class PerpetualProject
     phlawd = PerpetualPhlawd::Phlawd.new(@opts, @log)
     phlawd.print_instances
     fasta_alignments = phlawd.run_update(update_key, next_iteration)
-    p fasta_alignments
-
-
-    #TODONOW where should we put the phylips now?
-    # phlawd_working_dir expects u* folders in independent mode, and phlawd folders in the current mode...
-
-    # Transform fasta if applicable and move to right folder
-    #label = "_update#{next_iteration.to_s}"
-    #phylip_alignment = fasta_alignment.to_s + label + ".phy"
-    #if File.exist?(fasta_alignment)
-    #  @log.info "Found #{fasta_alignment}, generating #{label}"
-    #  PerpetualTreeUtils::Fasta.new(fasta_alignment).to_phylip(phylip_alignment)
-    #  FileUtils.mv(fasta_alignment, fasta_alignment + label) 
-    #  FileUtils.mv(phylip_alignment,  @opts['phlawd_working_dir']) 
-    #end
+    unless fasta_alignments.empty?
+      @phlawd_fastas = PerpetualTreeUtils::FastaAlignmentCollection.new fasta_alignments, @log
+      @phlawd_fastas.build_supermatrix(@opts, next_iteration)
+    end
   end
   def try_update
     @log.info "Try update using #{`ruby -v`}"
@@ -103,10 +93,12 @@ class PerpetualProject
     finished
   end
   def next_phlawd_alignment
-    alignments = Dir.entries(@opts['phlawd_working_dir']).select{|f| f =~ /^#{@name}.+\.phy$/}
+    next_alignment = ""
+    wdir = File.join @opts['phlawd_supermatrix_dir'], "iter_#{next_iteration}"
+    alignments = Dir.entries(wdir).select{|f| f =~ /^#{@name}.+\.phy$/}
     used = []
     used << @e[:initial_phy] if @keys.include?(:initial_phy)
-    # is this still required ? 
+    ## is this still required ? 
     update_phy_keys = @keys.select{|k| k =~ /^u[0-9]+_phy$/}
     update_phy_keys.each do |k|
       used << @e[k] 
@@ -120,11 +112,12 @@ class PerpetualProject
   end
   def launch_update(alignment, log)
     # check if the partition file exists (assumes it is .model) 
-    partition_file = File.join(@opts['phlawd_working_dir'], alignment.gsub("\.phy", "\.model"))
+    wdir = File.join @opts['phlawd_supermatrix_dir'], "iter_#{next_iteration}"
+    partition_file = File.join(wdir, alignment.gsub("\.phy", "\.model"))
     partition_file = "" unless File.exist? partition_file
     list = ExperimentTable::ExperimentList.new(@opts['experiments_file'])
     @log.info "Create an instance of the cycle starter"
-    updater = TreeBunchStarter.new(:phylip => File.join(@opts['phlawd_working_dir'], alignment),
+    updater = TreeBunchStarter.new(:phylip => File.join(wdir, alignment),
                                    :partition_file => partition_file,
                                    :prev_dir => last_folder,
                                    :base_dir => experiment_folder(next_iteration.to_s),

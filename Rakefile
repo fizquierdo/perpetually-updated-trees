@@ -89,3 +89,13 @@ task :tutorial, :parsi, :best do |t, args|
   end
 end
 
+desc "create demo pipeline"
+task :pipeline do
+  wdir = "pipeline_from_rake"
+  FileUtils.mkdir wdir
+  Dir.chdir(wdir) do 
+    system "../testinstall/bin/PLANTER_GENERATE pipeline"
+    system "ln ../testinstall/perpetualinstall/data/pln.db alignments/GenBank/pln.db"
+  end
+end
+

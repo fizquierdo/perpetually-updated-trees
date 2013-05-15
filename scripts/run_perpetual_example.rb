@@ -37,35 +37,14 @@ else
   p fasta_alignments
 end
 
-# create the phylip alignments
-phylip_alignments = fasta_alignments.map do |fasta| 
-  log.info "Translating #{fasta} into phylip"
-  phylip_name = fasta.to_s + ".phy"
-  PerpetualTreeUtils::Fasta.new(fasta).to_phylip(phylip_name)
-  phylip_name
-end
-
 # concatenate into one single phylip
-raise "No phylip alignment available" if phylip_alignments.empty?
-msa_name = opts['run_name'] + Time.now.to_i.to_s
-first_phylip = MultiPartition::Phylip.new phylip_alignments.shift
-log.info "Building alignment called #{msa_name}"
-msa = MultiPartition::SpeciesPhylip.new(first_phylip, msa_name)
-phylip_alignments.each do |phylip_filename|
-  log.info "Adding #{phylip_filename}"
-  msa.concat_phylip(MultiPartition::Phylip.new phylip_filename)
-end
-msa.save
+phlawd_fastas = PerpetualTreeUtils::FastaAlignmentCollection.new fasta_alignments, log
+phlawd_fastas.build_supermatrix(opts, 0)
+aln = phlawd_fastas.aln
+part = phlawd_fastas.part
 
-# Move input dataset to phlawd working folder
-aln = "#{msa_name}.phy" 
-part = "#{msa_name}.model"
+raise "Alignment not available" unless aln and File.exist? aln
 
-wdir = opts['phlawd_working_dir']
-FileUtils.mv aln, wdir
-FileUtils.mv part, wdir
-aln = File.join wdir, aln
-part = File.join wdir, part
 
 # Run iteration 1 of Raxml searches
 log.info "### SEARCH ITERATION 1 [INITIAL] ###"

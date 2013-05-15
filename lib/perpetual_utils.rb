@@ -1,5 +1,6 @@
 
 require 'bio'
+require 'rphylip'
 
 module PerpetualTreeUtils
 
@@ -104,6 +105,44 @@ module PerpetualTreeUtils
         f.puts "#{@seqs.size} #{@widths.first.to_s}"
         @seqs.each{|s| f.puts s} 
       end
+    end
+  end
+  
+  class FastaAlignmentCollection
+    attr_accessor :aln, :part
+    def initialize(fasta_alignments, log)
+      @fasta_alignments = fasta_alignments
+      @log = log
+      @aln = ""
+      @part = ""
+    end
+    def build_phylip_collection
+      @phylip_alignments = @fasta_alignments.map do |fasta| 
+        @log.info "Translating #{fasta} into phylip"
+        phylip_name = fasta.to_s + ".phy"
+        PerpetualTreeUtils::Fasta.new(fasta).to_phylip(phylip_name)
+        phylip_name
+      end
+    end
+    def build_supermatrix(opts, iteration)
+      build_phylip_collection
+      raise "No phylip alignment available" if @phylip_alignments.empty?
+      wdir = opts['phlawd_supermatrix_dir']
+      wdir = File.join wdir, "iter_#{iteration}"
+      FileUtils.mkdir_p wdir 
+      msa_name = opts['run_name'] + Time.now.to_i.to_s
+      Dir.chdir(wdir) do
+        first_phylip = MultiPartition::Phylip.new @phylip_alignments.shift
+        @log.info "Building alignment called #{msa_name}"
+        msa = MultiPartition::SpeciesPhylip.new(first_phylip, msa_name)
+        @phylip_alignments.each do |phylip_filename|
+          @log.info "Adding #{phylip_filename}"
+          msa.concat_phylip(MultiPartition::Phylip.new phylip_filename)
+        end
+        msa.save
+      end
+      @aln = File.join wdir, "#{msa_name}.phy" 
+      @part = File.join wdir,  "#{msa_name}.model"
     end
   end
 

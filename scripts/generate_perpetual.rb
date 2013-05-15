@@ -126,7 +126,7 @@ project.parsi_size = #{parsimony_multiplier}
 end
 
 # check if PHLAWD generated a new update
-project.import_phlawd_updates
+project.import_phlawd_updates("BUILD REQUIRED") # same key as in python autoupdate
 
 # Launch a new iteration if new data is available
 project.try_update
@@ -145,6 +145,7 @@ END_CRON
       FileUtils.cp_r "#{@install_path}/testdata/#{basedir}", basedir
       phlawd_working_dir = File.expand_path(File.join basedir, "phlawd")
       phlawd_database_dir = File.expand_path(File.join basedir, "GenBank")
+      phlawd_supermatrix_dir = File.expand_path(File.join basedir, "supermatrix")
       phlawd_config_str = <<END_PHLAWD_CONF
 # Generic PHLAWD configuration
 # Full path for PHLAWD v 3.3.
@@ -153,6 +154,7 @@ phlawd_binary: #{@phlawd_binary}
 phlawd_database_dir: #{phlawd_database_dir} 
 # Full path for output of phlawd
 phlawd_working_dir: #{phlawd_working_dir}
+phlawd_supermatrix_dir: #{phlawd_supermatrix_dir}
 phlawd_autoupdater: #{@install_path}/scripts/autoupdate_phlawd_db.py
 phlawd_autoupdate_info: #{@phlawd_autoupdate_info}
 END_PHLAWD_CONF
