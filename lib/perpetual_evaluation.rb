@@ -37,10 +37,21 @@ class ProjectResults
   def times
     timing_info_files.map{|i| i.total_search_time}
   end
+  # Number of iterations per search
+  def search_iterations
+    number_of_iterations = []
+    log_files.each do |f|
+      number_of_iterations << File.open(info_path f).readlines.size
+    end
+    number_of_iterations 
+  end
 
   private
+  def info_path(filename)
+    File.join @info_files_dir,filename
+  end
   def map_to_info_file(files)
-    files.map{|f| InfoFile.new(File.join @info_files_dir,f)}
+    files.map{|f| InfoFile.new(info_path f)}
   end
   def entries
     Dir.entries @info_files_dir
@@ -51,6 +62,9 @@ class ProjectResults
   end
   def scoring_info_files
     map_to_info_file entries.grep(/info\.SCORING/)
+  end
+  def log_files
+    entries.grep(/^RAxML_log/)
   end
 end
 

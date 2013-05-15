@@ -45,6 +45,9 @@ Dir.chdir(results_dir) do
     # Now find the runtimes of the searches
     puts "Runtime(h): " + r.times.to_floatstats + ", Total sum #{r.times.sum.r_to(2)}"
 
+    # Now report the stats of number of iteration from the log files
+    puts "Search Iterations: " + r.search_iterations.to_floatstats 
+
     ## Now we manually do a RF-analysis (TODO refactor)
 
     # Generate bunch
