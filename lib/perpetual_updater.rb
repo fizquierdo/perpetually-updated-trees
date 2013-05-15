@@ -5,7 +5,7 @@ require "experiment"
 require 'fileutils'
 require 'perpetual_utils'
 require 'logger'
-require 'phlawd' # TODO example should not be part of this, now just to use fasta2phy
+require 'phlawd' 
 
 module PerpetualTreeUpdater
 
@@ -19,40 +19,32 @@ class PerpetualProject
     @bunch_size = e[:bunch_size]
     @keys = e.keys 
     @opts = opts
-    @log ||= Logger.new opts['updates_log']
-    @log.datetime_format = "%Y-%m-%d %H:%M:%S"
+    @log ||=  PerpetualTreeUtils::MultiLogger.new opts['updates_log']
   end
   
-  def import_phlawd_updates
+  def import_phlawd_updates(update_key)
+    # Now this is all 
     @log.info "Try to import phlawd updates"
-    dbdir = File.dirname @opts['phlawd_database']
-    fasta_alignment = File.join dbdir, @opts['first_fasta_alignment']
-    name = @opts['phlawd_name'] || @name
-    autoupdate_info_file = @opts['phlawd_autoupdate_info'] || "update_info"
-    # TODO this should be done in the phlawd instance dir
-    # TODO re-write this part to support multi-gene inference from PHLAWD
-    Dir.chdir dbdir do
-      if File.exist?(autoupdate_info_file)
-        key = File.open(autoupdate_info_file).readlines.last
-        if key =~ /REBUILD REQUIRED/ and not File.exist?(fasta_alignment)
-          @log.info "Rebuild is requiread according to PHLAWD autoupdater"
-          cmd =  "PHLAWD assemble #{name}updateDB.phlawd > PhlawdAssembleUpdateDBinfo.log"
-          @log.info cmd
-          system cmd
-        end
-      else
-        @log.info "No file #{autoupdate_info_file} from PHLAWD autoupdater in #{dbdir}"
-      end
-    end
+
+    # Let phlawd take care of this:
+    phlawd = PerpetualPhlawd::Phlawd.new(@opts, @log)
+    phlawd.print_instances
+    fasta_alignments = phlawd.run_update(update_key, next_iteration)
+    p fasta_alignments
+
+
+    #TODONOW where should we put the phylips now?
+    # phlawd_working_dir expects u* folders in independent mode, and phlawd folders in the current mode...
+
     # Transform fasta if applicable and move to right folder
-    label = "_update#{next_iteration.to_s}"
-    phylip_alignment = fasta_alignment.to_s + label + ".phy"
-    if File.exist?(fasta_alignment)
-      @log.info "Found #{fasta_alignment}, generating #{label}"
-      PerpetualTreeUtils::Fasta.new(fasta_alignment).to_phylip(phylip_alignment)
-      FileUtils.mv(fasta_alignment, fasta_alignment + label) 
-      FileUtils.mv(phylip_alignment,  @opts['phlawd_working_dir']) 
-    end
+    #label = "_update#{next_iteration.to_s}"
+    #phylip_alignment = fasta_alignment.to_s + label + ".phy"
+    #if File.exist?(fasta_alignment)
+    #  @log.info "Found #{fasta_alignment}, generating #{label}"
+    #  PerpetualTreeUtils::Fasta.new(fasta_alignment).to_phylip(phylip_alignment)
+    #  FileUtils.mv(fasta_alignment, fasta_alignment + label) 
+    #  FileUtils.mv(phylip_alignment,  @opts['phlawd_working_dir']) 
+    #end
   end
   def try_update
     @log.info "Try update using #{`ruby -v`}"

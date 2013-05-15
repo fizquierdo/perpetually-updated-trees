@@ -21,6 +21,38 @@ module PerpetualPhlawd
         @log.info("Done with instance #{@gene_name}", "<<PHLAWD STDOUT")
       end
     end
+    def run_update(iteration)
+      # Check if the update was already run
+      last_iteration = 0
+      iteration_history_file = File.join @path, "PhlawdAssembleHistory.txt"
+      update_pending = true
+      f_hist = nil
+      if File.exist? iteration_history_file
+        f_hist = File.open(iteration_history_file, "a+")
+        hist_lines = f_hist.readlines
+        last_iteration = hist_lines.last.chomp unless hist_lines.empty?
+        if last_iteration.to_i == iteration.to_i  
+          @log.info("Done with instance #{@gene_name}", "<<PHLAWD STDOUT")
+          update_pending = false
+        end
+      else
+        f_hist = File.open(iteration_history_file, "w")
+      end
+      # Run the real update
+      if update_pending
+        Dir.chdir(@path) do 
+          generate_update_runfile
+          cmd = "#{@PHLAWD} assemble #{update_runfile}"
+          @log.systemlog("#{cmd} >> PhlawdAssembleUpdateDBinfo.log", "PHLAWD STDOUT>>")
+          @log.info("Done with instance #{@gene_name}", "<<PHLAWD STDOUT")
+        end
+        f_hist.puts iteration.to_s
+      end
+      f_hist.close
+      update_pending
+    end
+    
+    
     def expected_result_file
       File.join @path, "#{@gene_name}.FINAL.aln.rn"
     end
@@ -39,6 +71,14 @@ module PerpetualPhlawd
 	dbpath = File.join basepath, dbpath
       end
       File.absolute_path dbpath 
+    end
+    def generate_update_runfile
+      unless File.exist? update_runfile
+        FileUtils.cp(runfile, update_runfile)
+        File.open(update_runfile, "a") do |f|
+          f.puts "updateDB"
+        end
+      end
     end
     private
     def validate
@@ -61,6 +101,9 @@ module PerpetualPhlawd
     def runfile
       File.join @path, "#{@gene_name}.phlawd"
     end
+    def update_runfile
+      File.join @path, "#{@gene_name}updateDB.phlawd"
+    end
   end
 
   class PhlawdRunner
@@ -68,6 +111,9 @@ module PerpetualPhlawd
     def initialize(log, phlawd)
       @phlawd = phlawd
       @log = log
+    end
+    def writelog(msg)
+      @log.info msg
     end
   end
 
@@ -188,6 +234,19 @@ module PerpetualPhlawd
       end
       fasta_alignments 
     end
+    def run_update(update_key, iteration)
+      fasta_alignments = []
+      puts "Try to run an update for iteration #{iteration}"
+      if update_required? update_key
+        @phlawd_runner.writelog "Rebuild is required according to PHLAWD autoupdater"
+        valid_instances.each do |instance| 
+          if instance.run_update(iteration)
+            fasta_alignments << instance.expected_result_file
+          end
+        end
+      end
+      fasta_alignments
+    end
     private
     def valid_instances
       @instances.select{|instance| instance.valid}
@@ -197,9 +256,28 @@ module PerpetualPhlawd
       instances = []
       Dir.entries(working_dir).reject{|f| f=~ /^\.+$/}.each do |f|
         path =  File.join working_dir, f
-        instances << PhlawdInstance.new(path, @phlawd_runner) 
+        if File.directory? path
+          instances << PhlawdInstance.new(path, @phlawd_runner) 
+        end
       end
       instances
+    end
+    def update_required?(update_key)
+      update_required = false
+      dbdir = File.dirname @genbank_db.dbname
+      autoupdate_info_file = @opts['phlawd_autoupdate_info'] || "update_info"
+      Dir.chdir dbdir do
+        if File.exist?(autoupdate_info_file)
+          key = File.open(autoupdate_info_file).readlines.last
+          if key =~ /#{update_key}/ #and not File.exist?(fasta_alignment)
+            update_required = true
+          end
+        else
+          # This should be an error
+          @phlawd_runner.writelog "No file #{autoupdate_info_file} from PHLAWD autoupdater in #{dbdir}"
+        end
+      end
+      update_required
     end
   end
 end
