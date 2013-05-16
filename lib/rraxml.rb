@@ -4,7 +4,7 @@ require 'fileutils'
 module TreeCheck
   def check_fulltree
     newick_taxa = PerpetualNewick::NewickFile.new(@starting_newick).newickStrings[0].numtaxa
-    alignment_taxa = PerpetualPhylip::Phylip.new(@phylip).numtaxa
+    alignment_taxa = MultiPartition::Phylip.new(@phylip).numtaxa
     if alignment_taxa != newick_taxa
       raise "Tree #{@starting_newick} includes #{newick_taxa} taxa, #{alignment_taxa} expected"
     end

@@ -29,14 +29,6 @@ class Experiment
     end
     setup_ready
   end
-  def expand_with_updates(opts, updates_are_full_alignments = true)
-    ali = self.dirname("alignment")
-    phy = opts[:phylip]
-    raise "phylip file not available" if phy.nil? or not File.exist?(phy)
-    FileUtils.copy phy, ali 
-    p = PerpetualPhylip::Phylip.new(File.join ali, File.basename(phy))
-    p.subdivide_random opts 
-  end
 end
 
 class ExperimentList
@@ -79,11 +71,12 @@ class ExperimentList
     end
     self.save
   end
+=begin
   def last_iteration(name)
-    # TODO is this working?
     e = self.find_by_name(name) 
     e.last_bunch_dir unless e.nil?
   end
+=end
   def show
     puts "Current Experiments"
     puts "ID\tname"

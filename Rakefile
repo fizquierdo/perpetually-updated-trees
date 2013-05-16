@@ -79,19 +79,21 @@ task :conf do
   end
 end
 
-desc "tutorial"
+desc "Run generator for the gettin-started tutorial"
 task :tutorial, :parsi, :best do |t, args|
-  wdir = "tutorial2"
+  wdir = "ztutorial_from_rake_" + Time.now.to_i.to_s
   args.with_defaults(:parsi => 3, :best => 1)
+  update_cmd = '../testinstall/bin/PLANTER --name loni --update-phy ../testdata/lonicera_23taxa.rbcL.phy --parsi-size 2 --bunch-size 1 --standalone-config-file standalone_loni.yml'
   FileUtils.mkdir wdir
   Dir.chdir(wdir) do 
     system "../testinstall/bin/PLANTER_GENERATE loni #{args[:best]} #{args[:parsi]} ../testdata/lonicera_10taxa.rbcL.phy"
+    system "echo #{update_cmd} > update_loni.sh"
   end
 end
 
-desc "create demo pipeline"
+desc "Run generator to create demo pipeline and link small pln.db"
 task :pipeline do
-  wdir = "pipeline_from_rake"
+  wdir = "zpipeline_from_rake_" + Time.now.to_i.to_s
   FileUtils.mkdir wdir
   Dir.chdir(wdir) do 
     system "../testinstall/bin/PLANTER_GENERATE pipeline"

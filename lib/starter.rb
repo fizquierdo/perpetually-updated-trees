@@ -259,25 +259,6 @@ class TreeBunchStarter
         logput "Done ML search from scratch with #{num_gamma_trees} trees"
         bestLH
   end
-
-  def prune_taxa(taxa)
-    # on the collected trees
-    logput "Removing outliers from newick file"
-    n = NewickFile.new(@bestML_bunch)
-    n.remove_taxa(taxa, @bestML_bunch + ".pruned", verbose = true)
-
-    # on the alignments of the iter
-    logput "Removing outliers from phylip file"
-    alignments = []
-    Dir.entries(@alignment_dir).each{|f| alignments << f if File.file?(File.join @alignment_dir,f)} 
-    raise "More than one alignment in #{@alignment_dir}" if alignments.size > 1
-    target_alignment = alignments.first
-    pruned_alignment = target_alignment + ".pruned"
-    pruned_alignment_dir = File.join @alignment_dir, "pruned"
-    FileUtils.mkdir_p(pruned_alignment_dir)
-    p = Phylip.new(File.join @alignment_dir, target_alignment)
-    p.remove_taxa(taxa, File.join(pruned_alignment_dir,pruned_alignment))
-  end
   private
     def check_options(opts)
       supported_opts = [:num_parsi_trees, :num_bestML_trees, :exp_name, :cycle_batch_script, :initial_iteration]
