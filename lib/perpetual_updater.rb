@@ -92,23 +92,22 @@ class PerpetualProject
     end
     finished
   end
+  def used_alignments
+    used = []
+    used << @e[:initial_phy] if @keys.include?(:initial_phy)
+    update_phy_keys = @keys.select{|k| k =~ /^u[0-9]+_phy$/}
+    update_phy_keys.each{|k| used << @e[k] }
+    used
+  end
   def next_phlawd_alignment
     next_alignment = ""
     wdir = File.join @opts['phlawd_supermatrix_dir'], "iter_#{next_iteration}"
-    alignments = Dir.entries(wdir).select{|f| f =~ /^#{@name}.+\.phy$/}
-    used = []
-    used << @e[:initial_phy] if @keys.include?(:initial_phy)
-    ## is this still required ? 
-    update_phy_keys = @keys.select{|k| k =~ /^u[0-9]+_phy$/}
-    update_phy_keys.each do |k|
-      used << @e[k] 
+    if File.exist? wdir
+      alignments = Dir.entries(wdir).select{|f| f =~ /^#{@name}.+\.phy$/}
+      candidates = alignments - used_alignments.map{|u| File.basename u}
+      next_alignment = candidates.sort.first unless candidates.empty?
     end
-    candidates = alignments - used.map{|u| File.basename u}
-    if candidates.empty?
-      next_alignment = ""
-    else
-      next_alignment = candidates.sort.first  
-    end
+    next_alignment 
   end
   def launch_update(alignment, log)
     # check if the partition file exists (assumes it is .model) 
