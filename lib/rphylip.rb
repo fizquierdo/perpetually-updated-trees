@@ -14,8 +14,8 @@ module MultiPartition
       lines.each do |line|
         name, seq = line.chomp.split
         if taxa_names.include?(name)
-          puts "#{taxa_names.size} taxa names parsed"
-          puts "#{name} Taxon name already exists, skipping" 
+          $stderr.puts "#{taxa_names.size} taxa names parsed"
+          $stderr.puts "#{name} Taxon name already exists, skipping" 
           next
         end
         @seqs[name] = seq
@@ -39,21 +39,23 @@ module MultiPartition
   end
 
   class SpeciesPhylip
-    def initialize(first_phylip, name = "species")
+    def initialize(first_phylip, log, name = "species")
       @base = first_phylip
       @name = name
       @partitions = []
       @partitions << Partition.new(1, @base.seqlen, @base.filename)
+      @log = log
     end
     def concat_phylip(new_phylip)
       missing = (@base.taxa_names - new_phylip.taxa_names)
       new = (new_phylip.taxa_names - @base.taxa_names)
       total = (@base.taxa_names + new_phylip.taxa_names).uniq
       both = total - missing - new
-      puts "missing #{missing.size}"
-      puts "new #{new.size}"
-      puts "both #{both.size}"
-      puts "total #{total.size}"
+      @log.info "merging phylip alignment with #{new_phylip}"
+      @log.info "missing #{missing.size}"
+      @log.info "new #{new.size}"
+      @log.info "both #{both.size}"
+      @log.info "total #{total.size}"
       raise "total taxa unexpected" unless total.size == both.size + missing.size + new.size
       # edit the sequences
       both.each{|taxon| @base.seqs[taxon] += new_phylip.seqs[taxon]}
@@ -69,7 +71,7 @@ module MultiPartition
       @base.filename = @name
     end
     def print_partitions
-      @partitions.each{|p| puts p.to_s}
+      @partitions.each{|p| @log.info p.to_s}
     end
     def save
       File.open("#{@name}.phy", "w+") do |f|

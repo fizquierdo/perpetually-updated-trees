@@ -117,16 +117,18 @@ module PerpetualTreeUtils
       @aln = ""
       @part = ""
     end
-    def build_phylip_collection
+    def build_phylip_collection(iteration, archive = false)
       @phylip_alignments = @fasta_alignments.map do |fasta| 
         @log.info "Translating #{fasta} into phylip"
         phylip_name = fasta.to_s + ".phy"
-        PerpetualTreeUtils::Fasta.new(fasta).to_phylip(phylip_name)
+        fasta_file = PerpetualTreeUtils::Fasta.new(fasta)
+        fasta_file.to_phylip(phylip_name)
+        #fasta_file.archive(iteration) if archive # TODO 
         phylip_name
       end
     end
     def build_supermatrix(opts, iteration)
-      build_phylip_collection
+      build_phylip_collection(iteration, archive = true)
       raise "No phylip alignment available" if @phylip_alignments.empty?
       wdir = opts['phlawd_supermatrix_dir']
       wdir = File.join wdir, "iter_#{iteration}"
@@ -135,7 +137,7 @@ module PerpetualTreeUtils
       Dir.chdir(wdir) do
         first_phylip = MultiPartition::Phylip.new @phylip_alignments.shift
         @log.info "Building alignment called #{msa_name}"
-        msa = MultiPartition::SpeciesPhylip.new(first_phylip, msa_name)
+        msa = MultiPartition::SpeciesPhylip.new(first_phylip, @log, msa_name)
         @phylip_alignments.each do |phylip_filename|
           @log.info "Adding #{phylip_filename}"
           msa.concat_phylip(MultiPartition::Phylip.new phylip_filename)
