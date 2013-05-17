@@ -22,35 +22,12 @@ module PerpetualPhlawd
       end
     end
     def run_update(iteration)
-      # Check if the update was already run
-      last_iteration = 0
-      #iteration_history_file = File.join @path, "PhlawdAssembleHistory.txt"
-      #update_pending = true
-      #f_hist = nil
-      #if File.exist? iteration_history_file
-      #  f_hist = File.open(iteration_history_file, "a+")
-      #  hist_lines = f_hist.readlines
-      #  last_iteration = hist_lines.last.chomp unless hist_lines.empty?
-      #  @log.info("Last registered iteration: #{last_iteration}, current: #{iteration}")  
-      #  if last_iteration.to_i == iteration.to_i - 1
-      #    @log.info("Done with instance #{@gene_name}", "<<PHLAWD STDOUT")
-      #    update_pending = false
-      #  end
-      #else
-      #  f_hist = File.open(iteration_history_file, "w")
-      #end
-      # Run the real update
-      #if update_pending
-        Dir.chdir(@path) do 
-          generate_update_runfile
-          cmd = "#{@PHLAWD} assemble #{update_runfile}"
-          @log.systemlog("#{cmd} >> PhlawdAssembleUpdateDBinfo.log", "PHLAWD STDOUT>>")
-          @log.info("Done with instance #{@gene_name}", "<<PHLAWD STDOUT")
-        end
-      #  f_hist.puts iteration.to_s
-      #end
-      #f_hist.close
-      #update_pending
+      Dir.chdir(@path) do 
+        generate_update_runfile
+        cmd = "#{@PHLAWD} assemble #{update_runfile}"
+        @log.systemlog("#{cmd} >> PhlawdAssembleUpdateDBinfo.log", "PHLAWD STDOUT>>")
+        @log.info("Done with instance #{@gene_name}", "<<PHLAWD STDOUT")
+      end
     end
     
     
@@ -241,9 +218,6 @@ module PerpetualPhlawd
       if update_required? update_key
         @phlawd_runner.writelog "Rebuild is required according to PHLAWD autoupdater"
         valid_instances.each do |instance| 
-          #if instance.run_update(iteration)
-          #  fasta_alignments << instance.expected_result_file
-          #end
           instance.run_update(iteration)
           fasta_alignments << instance.expected_result_file
         end

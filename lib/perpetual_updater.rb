@@ -28,7 +28,6 @@ class PerpetualProject
     @log.info "Try to import phlawd updates"
     # Let phlawd take care of this:
     phlawd = PerpetualPhlawd::Phlawd.new(@opts, @log)
-    phlawd.print_instances
     fasta_alignments = phlawd.run_update(update_key, next_iteration)
     unless fasta_alignments.empty?
       @phlawd_fastas = PerpetualTreeUtils::FastaAlignmentCollection.new fasta_alignments, @log
