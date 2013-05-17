@@ -187,9 +187,6 @@ class TreeBunchStarter
         logput "update iteration, looking for parsimony start trees from previous bunch\n----"
         phylip_dataset = @phylip_updated
         raise "prev bunch not ready #{@prev_bestML_bunch}" unless File.exist?(@prev_bestML_bunch)
-        # TODO decide how to deal with outliers, should be go here for the outliers? prune by default? 
-        # it depends on what we did by default with PHLAWD, 
-        # it shouhd be sufficient to call prune_taxa or a modified version thereof
         last_best_bunch = PerpetualNewick::NewickFile.new(@prev_bestML_bunch)
         last_best_bunch.save_each_newick_as(File.join(@parsimony_trees_dir, 'prev_parsi_tree'), "nw") 
         prev_trees = Dir.entries(@parsimony_trees_dir).select{|f| f =~ /^prev_parsi_tree/}

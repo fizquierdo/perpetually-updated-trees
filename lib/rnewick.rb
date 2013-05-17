@@ -15,6 +15,9 @@ module PerpetualNewick
     def initialize(str)
       @str=String.new(str)
     end
+    def save_as(filename)
+      File.open(filename, "w"){|f| f.puts @str}
+    end
     def support_values
       @str.gsub("0.0;","").scan(/\[([0-9]+)\]/).map{|n| n[0].to_i}
     end
@@ -70,23 +73,6 @@ module PerpetualNewick
         end
       end
     end
-=begin
-  def remove_taxa(taxa, pruned_tree, verbose = false)
-    # assume nw_prune and nw_reroot are in the PATH
-    nw_pruner = "nw_prune"
-    nw_unrooter = "nw_reroot"
-    #required_utils = [nw_pruner, nw_unrooter] 
-    required_utils = [nw_pruner] 
-    required_utils.each do |nw_util|
-      raise "#{nw_util} from newick utilities not available" unless binary_available(nw_util)
-    end
-    # prune a list of taxa and unroot resulting tree with these nice and fast newick utilities
-    # on the first tree of the file or all of them?
-    #system "#{nw_pruner} #{@filename} #{taxa.join ' '} | #{nw_unrooter} -d - > #{pruned_tree}"
-    system "#{nw_pruner} #{@filename} #{taxa.join ' '} > #{pruned_tree}"
-    puts "removed #{taxa.join ','} and saved in #{pruned_tree}" if verbose
-  end
-=end
   end
 end
 

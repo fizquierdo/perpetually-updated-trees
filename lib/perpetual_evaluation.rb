@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 require 'erb'
+require 'rnewick'
 
 
 module  PerpetualTreeEvaluation
@@ -57,7 +58,7 @@ class ProjectResults
     Dir.entries @info_files_dir
   end
   def timing_info_files
-    # TODO SCORING should not be a hardcoded key
+    # ignore the timing related to the SCORING info
     map_to_info_file entries.grep(/^RAxML_info/).delete_if{|f| f =~ /SCORING/}
   end
   def scoring_info_files
@@ -149,9 +150,10 @@ class IterationFinisher
   end
 
   def upload_best_tree
+    #system "head -n 1 #{bestML_bunch} > #{best_tree}"
     best_tree = File.join best_tree_dir, "best_tree.newick"
-    # TODO dont call system here..
-    system "head -n 1 #{bestML_bunch} > #{best_tree}"
+    newick_bestML_bunch = PerpetualNewick::NewickFile.new(bestML_bunch)
+    newick_bestML_bunch.newickStrings.first.save_as(best_tree)
     tree_url = upload_iplant_tree(best_tree, @update_id)
     @log.puts "Best topology available at #{tree_url}"
     tree_url
@@ -166,7 +168,7 @@ class IterationFinisher
     File.dirname(@bestML_bunch)
   end
   def upload_iplant_tree(newick_file, name)
-   # TODO this is only relevant for iplant, should not be here
+   # TODO this is only relevant for iplant, should not be here?
    tree_url = ""
 
    url = "http://portnoy.iplantcollaborative.org/parseTree"

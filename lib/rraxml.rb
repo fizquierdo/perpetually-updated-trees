@@ -143,7 +143,6 @@ module PerpetualTreeMaker
     end
   end
   class RaxmlGammaScorer < Raxml
-    #TODO no tests for the gamma scorer class :(
     include TreeCheck
     def initialize(opts)
       super(opts)
@@ -191,7 +190,6 @@ module PerpetualTreeMaker
   end
 
   class RaxmlGammaSearch < Raxml
-    #TODO no tests for the gamma search class :(
     include TreeCheck
     def initialize(opts)
       super(opts)
