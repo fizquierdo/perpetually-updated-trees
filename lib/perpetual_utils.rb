@@ -6,10 +6,11 @@ module PerpetualTreeUtils
 
   # Some special log to show case the steps of the pipeline
   class MultiLogger
-    def initialize(log_file_name)
+    def initialize(log_file_name, silent = false)
       @log ||= Logger.new log_file_name
       @log.datetime_format = "%Y-%m-%d %H:%M:%S"
       @log_file = log_file_name
+      @silent = silent
     end
     def systemlog(cmd, header = "")
       @log.info "#{header}: Executing #{cmd}"
@@ -18,7 +19,7 @@ module PerpetualTreeUtils
     end
     def info(msg, header = "")
       @log.info "#{header}: #{msg}"
-      puts "#{header}: #{msg}"
+      puts "#{header}: #{msg}" unless @silent
     end
     def close
       @log.close

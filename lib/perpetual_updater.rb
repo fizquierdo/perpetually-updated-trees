@@ -19,7 +19,7 @@ class PerpetualProject
     @bunch_size = e[:bunch_size]
     @keys = e.keys 
     @opts = opts
-    @log ||=  PerpetualTreeUtils::MultiLogger.new opts['updates_log']
+    @log ||=  PerpetualTreeUtils::MultiLogger.new(opts['updates_log'], silent = true)
   end
 
   
