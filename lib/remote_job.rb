@@ -95,8 +95,20 @@ class Jobber
       @log.info File.open(local_script).readlines{|l| @log.info l}
       @log.info
     else
-      Net::SCP.start(@conf['remote_machine'], @conf['remote_user']) do |scp|
-        scp.upload! local_script, remote_script_dir
+      tries = 5
+      begin
+        Net::SCP.start(@conf['remote_machine'], @conf['remote_user']) do |scp|
+          scp.upload! local_script, remote_script_dir
+        end
+      rescue Exception => exception 
+        tries -= 1
+        if tries > 0
+          @log.info "Sending #{scriptname}, #{tries} attempts left"
+          retry
+        else
+          @log.error "Failed to send #{scriptname}"
+          @log.error exception
+        end
       end
     end
   end
@@ -105,9 +117,22 @@ class Jobber
     scriptname = File.basename local_script
     scriptname = " -hold_jid #{holdstr}" + " #{scriptname}" unless holdstr.nil?
     @log.info "Submitting #{scriptname}"
-    Net::SSH.start(@conf['remote_machine'], @conf['remote_user']) do |ssh|
-      res = ssh.exec!("cd #{remote_script_dir} && #{subm_cmd} #{scriptname}")
-      @log.info res
+    tries = 5
+    begin
+      Net::SSH.start(@conf['remote_machine'], @conf['remote_user']) do |ssh|
+        res = ssh.exec!("cd #{remote_script_dir} && #{subm_cmd} #{scriptname}")
+        @log.info res
+      end
+      @log.info "Submitted #{scriptname}"
+    rescue Exception => exception 
+      tries -= 1
+      if tries > 0
+        @log.info "Submitting #{scriptname}, #{tries} attempts left"
+        retry
+      else
+        @log.error "Failed to submit #{scriptname}"
+        @log.error exception
+      end
     end
   end
 
