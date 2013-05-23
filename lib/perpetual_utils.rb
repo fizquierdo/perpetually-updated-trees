@@ -93,6 +93,7 @@ module PerpetualTreeUtils
     def initialize(filename)
       @seqs = []
       @widths = []
+      raise "File #{filename} does not exist" unless File.exist? filename
       ff = Bio::FlatFile.open(Bio::FastaFormat, filename)
       ff.each_entry do |fa|
         @seqs << fa.definition + " " + fa.naseq
