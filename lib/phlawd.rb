@@ -199,30 +199,35 @@ module PerpetualPhlawd
         $stderr.puts "=="
       end
     end
+    def add_fasta_alignment(fasta_file)
+      if File.exist? fasta_file
+        @fasta_alignments << fasta_file
+      else
+        msg = "PHLAWD did not generate #{fasta_file}"
+        $stderr.puts msg
+        @phlawd_runner.writelog msg
+      end
+    end
     def run_initial
-      fasta_alignments = []
+      @fasta_alignments = []
       # Run phlawd sequentially
       valid_instances.each do |instance| 
         instance.run_initial unless File.exist? instance.expected_result_file 
-        if File.exist? instance.expected_result_file
-          fasta_alignments << instance.expected_result_file
-        else
-          $stderr.puts "PHLAWD did not generate #{instance.expected_result_file}"
-        end
+        add_fasta_alignment instance.expected_result_file
       end
-      fasta_alignments 
+      @fasta_alignments 
     end
     def run_update(update_key, iteration)
-      fasta_alignments = []
+      @fasta_alignments = []
       @phlawd_runner.writelog "Try to run an update for iteration #{iteration}"
       if update_required? update_key
         @phlawd_runner.writelog "Rebuild is required according to PHLAWD autoupdater"
         valid_instances.each do |instance| 
           instance.run_update(iteration)
-          fasta_alignments << instance.expected_result_file
+          add_fasta_alignment instance.expected_result_file
         end
       end
-      fasta_alignments
+      @fasta_alignments
     end
     def autoupdate_info_file
       @opts['phlawd_autoupdate_info'] || "update_info"
