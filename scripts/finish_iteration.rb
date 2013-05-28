@@ -31,7 +31,7 @@ begin
     iteration.add_finish_label
   else
     titlestr = "Missing trees for Iteration #{iteration.update_id} for project #{iteration.name}"
-    iteration.log.puts  "#{r.lh_rank.size} available trees, expected #{iteration.tree_search_bunch_size}" 
+    iteration.log.puts  "#{r.lh_rank.size} available info files, #{r.support_topology_files} available trees with support, expected #{iteration.tree_search_bunch_size}" 
   end
   iteration.log.close
   mailer = PerpetualTreeEvaluation::Mailer.new(:mail_to => iteration.mail_to, 

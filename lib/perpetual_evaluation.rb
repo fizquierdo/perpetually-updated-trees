@@ -15,8 +15,7 @@ class ProjectResults
 
   # check if we have gathered all the trees we expected
   def has_collected_all_trees?
-    # TODO should also check that the support files have been transferred
-    @expected_set == lh_rank.size
+    @expected_set == lh_rank.size and @expected_set == support_topology_files.size
   end
   # Rank info
   def lh_rank
@@ -46,6 +45,9 @@ class ProjectResults
       number_of_iterations << File.open(info_path f).readlines.size
     end
     number_of_iterations 
+  end
+  def support_topology_files
+    entries.grep(/^RAxML_fastTreeSH_Support/)
   end
 
   private
