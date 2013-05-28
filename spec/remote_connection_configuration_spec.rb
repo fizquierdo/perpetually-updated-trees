@@ -5,6 +5,7 @@ require 'net/ssh'
 require 'net/scp'
 require_relative '../lib/configuration'
 
+# User should edit this file after install
 config_file = "testinstall/perpetualinstall/templates/remote_config.yml"
 
 describe "remote connection" do
@@ -44,6 +45,7 @@ describe "remote connection" do
     it "should not connect" do
       lambda{Net::SSH.start(@conf['remote_machine'], "nouser")}.should 
         raise_error(Net::SSH::AuthenticationFailed)
+      expect{Net::SSH.start(@conf['remote_machine'], "nouser")}.to raise_error(Net::SSH::AuthenticationFailed)
     end
   end
   describe "can execute remote operations" do

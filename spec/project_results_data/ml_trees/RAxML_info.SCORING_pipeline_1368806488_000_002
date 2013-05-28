@@ -1,0 +1,60 @@
+
+
+This is RAxML version 7.4.3 released by Alexandros Stamatakis on March 8 2013.
+
+With greatly appreciated code contributions by:
+Andre Aberer (HITS)
+Simon Berger (HITS)
+Nick Pattengale (Sandia)
+Wayne Pfeiffer (SDSC)
+Akifumi S. Tanabe (NRIFS)
+
+
+Alignment has 94 distinct alignment patterns
+
+Proportion of gaps and completely undetermined characters in this alignment: 45.39%
+
+RAxML computation of SH-like support values on a given tree
+
+Using 2 distinct models/data partitions with joint branch length optimization
+
+
+All free model parameters will be estimated by RAxML
+GAMMA model of rate heteorgeneity, ML estimate of alpha-parameter
+
+GAMMA Model parameters will be estimated up to an accuracy of 0.1000000000 Log Likelihood units
+
+Partition: 0
+Alignment Patterns: 4
+Name: matK.FINAL.aln.rn.phy
+DataType: DNA
+Substitution Matrix: GTR
+
+
+
+Partition: 1
+Alignment Patterns: 90
+Name: rbcL.FINAL.aln.rn.phy
+DataType: DNA
+Substitution Matrix: GTR
+
+
+
+
+RAxML was called as follows:
+
+/scratch/01844/izquiefo/remote/wooster/bin/raxmlHPC-PTHREADS-SSE3 -s /scratch/01844/izquiefo/remote/wooster/experiments/pipeline_1368806488/output/batch_0/alignments/pipeline_13688064881368806561.phy -q /scratch/01844/izquiefo/remote/wooster/experiments/pipeline_1368806488/output/batch_0/alignments/pipeline_13688064881368806561.model -m GTRGAMMA -f J -t RAxML_result.pipeline_1368806488_000_002 -T 16 -n SCORING_pipeline_1368806488_000_002 
+
+
+Time after model optimization: 0.068364
+Initial Likelihood -3475.851937
+
+NNI interchanges 3 Likelihood -3474.452313
+NNI interchanges 1 Likelihood -3474.374717
+NNI interchanges 0 Likelihood -3474.374716
+
+Final Likelihood of NNI-optimized tree: -3474.374716
+
+RAxML NNI-optimized tree written to file: /scratch/01844/izquiefo/remote/wooster/experiments/pipeline_1368806488/output/batch_0/ml_trees/RAxML_fastTree.SCORING_pipeline_1368806488_000_002
+Same tree with SH-like supports written to file: /scratch/01844/izquiefo/remote/wooster/experiments/pipeline_1368806488/output/batch_0/ml_trees/RAxML_fastTreeSH_Support.SCORING_pipeline_1368806488_000_002
+Total execution time: 0.090450
