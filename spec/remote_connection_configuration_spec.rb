@@ -66,7 +66,7 @@ describe "remote connection" do
     describe "can transfer data" do
       before(:all) do 
         Net::SCP.start(@conf['remote_machine'], @conf['remote_user']) do |scp|
-          Dir.chdir("spec/remote_connection_configuration_data") do
+          Dir.chdir("spec/project_results_data/ml_trees") do
             Dir.entries(Dir.pwd).select{|f| f=~ /^RAxML/}.each do |f|
 	      puts "Uploading #{f}"
               scp.upload!(f, @testdir)
