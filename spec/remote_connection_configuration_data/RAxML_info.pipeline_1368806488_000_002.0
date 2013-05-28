@@ -1,0 +1,101 @@
+
+
+This is RAxML-Light version 1.1.1 released by Alexandros Stamatakis, Christian Goll, and Fernando Izquierdo-Carrasco (ole) in August 2012.
+
+
+Alignment has 94 distinct alignment patterns
+
+Proportion of gaps and completely undetermined characters in this alignment: 45.39%
+
+RAxML rapid hill-climbing mode
+
+Using 2 distinct models/data partitions with joint branch length optimization
+
+
+All free model parameters will be estimated by RAxML
+ML estimate of 25 per site rate categories
+
+Partition: 0
+Alignment Patterns: 4
+Name: matK.FINAL.aln.rn.phy
+DataType: DNA
+Substitution Matrix: GTR
+
+
+
+Partition: 1
+Alignment Patterns: 90
+Name: rbcL.FINAL.aln.rn.phy
+DataType: DNA
+Substitution Matrix: GTR
+
+
+
+
+RAxML was called as follows:
+
+/scratch/01844/izquiefo/remote/wooster/bin/raxmlLight-PTHREADS-AVX -s /scratch/01844/izquiefo/remote/wooster/experiments/pipeline_1368806488/output/batch_0/alignments/pipeline_13688064881368806561.phy -q /scratch/01844/izquiefo/remote/wooster/experiments/pipeline_1368806488/output/batch_0/alignments/pipeline_13688064881368806561.model -m GTRCAT -D -t ../parsimony_trees/RAxML_parsimonyTree.pipeline_1368806488_002.0 -T 16 -n pipeline_1368806488_000_002.0 
+
+
+Memory Saving via Subtree Equality Vectors: DISABLED
+Memory Saving via Additional Vector Recomputations: DISABLED
+
+Checkpoint written to: /scratch/01844/izquiefo/remote/wooster/experiments/pipeline_1368806488/output/batch_0/ml_trees/RAxML_binaryCheckpoint.pipeline_1368806488_000_002.0_0 likelihood: -3200.393765
+
+Checkpoint written to: /scratch/01844/izquiefo/remote/wooster/experiments/pipeline_1368806488/output/batch_0/ml_trees/RAxML_binaryCheckpoint.pipeline_1368806488_000_002.0_1 likelihood: -3200.393765
+
+Best rearrangement radius: 5
+
+Checkpoint written to: /scratch/01844/izquiefo/remote/wooster/experiments/pipeline_1368806488/output/batch_0/ml_trees/RAxML_binaryCheckpoint.pipeline_1368806488_000_002.0_2 likelihood: -3198.261810
+
+Checkpoint written to: /scratch/01844/izquiefo/remote/wooster/experiments/pipeline_1368806488/output/batch_0/ml_trees/RAxML_binaryCheckpoint.pipeline_1368806488_000_002.0_3 likelihood: -3198.248883
+
+Checkpoint written to: /scratch/01844/izquiefo/remote/wooster/experiments/pipeline_1368806488/output/batch_0/ml_trees/RAxML_binaryCheckpoint.pipeline_1368806488_000_002.0_4 likelihood: -3198.235614
+
+Checkpoint written to: /scratch/01844/izquiefo/remote/wooster/experiments/pipeline_1368806488/output/batch_0/ml_trees/RAxML_binaryCheckpoint.pipeline_1368806488_000_002.0_5 likelihood: -3198.235614
+
+Checkpoint written to: /scratch/01844/izquiefo/remote/wooster/experiments/pipeline_1368806488/output/batch_0/ml_trees/RAxML_binaryCheckpoint.pipeline_1368806488_000_002.0_6 likelihood: -3198.235614
+
+Checkpoint written to: /scratch/01844/izquiefo/remote/wooster/experiments/pipeline_1368806488/output/batch_0/ml_trees/RAxML_binaryCheckpoint.pipeline_1368806488_000_002.0_7 likelihood: -3198.235614
+
+
+Overall Time for 1 Inference 0.242753
+
+Overall accumulated Time (in case of restarts): 0.242753
+
+Likelihood   : -3198.235614
+
+
+Partition: 0
+Name: matK.FINAL.aln.rn.phy
+Type of Data: DNA
+rate A <-> C: 0.720043
+rate A <-> G: 0.000331
+rate A <-> T: 0.856365
+rate C <-> G: 0.070330
+rate C <-> T: 0.947622
+rate G <-> T: 1.000000
+
+freq pi(A): 0.270560
+freq pi(C): 0.214452
+freq pi(G): 0.205998
+freq pi(T): 0.308990
+
+Partition: 1
+Name: rbcL.FINAL.aln.rn.phy
+Type of Data: DNA
+rate A <-> C: 0.747676
+rate A <-> G: 2.564433
+rate A <-> T: 0.539089
+rate C <-> G: 0.566575
+rate C <-> T: 3.599308
+rate G <-> T: 1.000000
+
+freq pi(A): 0.263622
+freq pi(C): 0.203459
+freq pi(G): 0.248131
+freq pi(T): 0.284788
+
+Final tree written to:                 /scratch/01844/izquiefo/remote/wooster/experiments/pipeline_1368806488/output/batch_0/ml_trees/RAxML_result.pipeline_1368806488_000_002.0
+Execution Log File written to:         /scratch/01844/izquiefo/remote/wooster/experiments/pipeline_1368806488/output/batch_0/ml_trees/RAxML_log.pipeline_1368806488_000_002.0
+Execution information file written to: /scratch/01844/izquiefo/remote/wooster/experiments/pipeline_1368806488/output/batch_0/ml_trees/RAxML_info.pipeline_1368806488_000_002.0

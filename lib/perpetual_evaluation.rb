@@ -15,6 +15,7 @@ class ProjectResults
 
   # check if we have gathered all the trees we expected
   def has_collected_all_trees?
+    # TODO should also check that the support files have been transferred
     @expected_set == lh_rank.size
   end
   # Rank info
