@@ -23,6 +23,7 @@ describe PerpetualTreeEvaluation::ProjectResults do
       expect(@p.expected_set).to eq 1
     end
     it "return an ordered rank of log likelihoods" do
+      p @p.lh_rank
       lhs = @p.lhs
       expect(lhs.size).to eq @expected_set
       expect(lhs.first).to be > lhs.last
