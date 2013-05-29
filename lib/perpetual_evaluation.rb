@@ -112,7 +112,7 @@ end
   end
 
 class IterationFinisher
-  attr_reader :update_id, :results_dir, :bestML_bunch, :mail_to, :name, :tree_search_bunch_size, :ml_remote_dir
+  attr_reader :update_id, :results_dir, :bestML_bunch, :mail_to, :name, :tree_search_bunch_size
   attr_accessor :log 
   def initialize(collector_args)
     @collector_args = collector_args
@@ -126,7 +126,6 @@ class IterationFinisher
     @iteration_results_filename = collector_args[5]
     @name = collector_args[6]
     @tree_search_bunch_size = collector_args[7]
-    @ml_remote_dir = collector_args[8]
 
     # The file where we write the results of the iteration
     @log = File.open(iteration_log_filename, "a+")

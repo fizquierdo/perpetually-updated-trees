@@ -38,25 +38,28 @@ describe "remote connection" do
     end
   end
 
+
   describe "can be established" do
+    def connect(user)
+       Net::SSH.start(@conf['remote_machine'], user)
+    end
     it "should connect" do
-      lambda{Net::SSH.start(@conf['remote_machine'], @conf['remote_user'])}.should_not raise_error
+      expect{connect @conf['remote_user']}.not_to raise_error(Net::SSH::AuthenticationFailed)
     end
     it "should not connect" do
-      lambda{Net::SSH.start(@conf['remote_machine'], "nouser")}.should 
-        raise_error(Net::SSH::AuthenticationFailed)
-      expect{Net::SSH.start(@conf['remote_machine'], "nouser")}.to raise_error(Net::SSH::AuthenticationFailed)
+      expect{connect "nouser"}.to raise_error(Net::SSH::AuthenticationFailed)
     end
   end
   describe "can execute remote operations" do
+    def connect_ssh
+       Net::SSH.start(@conf['remote_machine'], @conf['remote_user']){|ssh| yield(ssh)}
+    end
     before(:all) do 
       @testdir = File.join @conf['remote_path'], "testdir"
-      Net::SSH.start(@conf['remote_machine'], @conf['remote_user']) do |ssh|
-        res = ssh.exec!("mkdir #{@testdir}")
-      end
+      connect_ssh{|ssh| res = ssh.exec!("mkdir #{@testdir}")}
     end
     it "should create a test dir" do
-      Net::SSH.start(@conf['remote_machine'], @conf['remote_user']) do |ssh|
+      connect_ssh do |ssh|
         dirname = ssh.exec!("ls #{@testdir}")
 	dirname.should be_nil
         wrong_dirname = ssh.exec!("ls unexisting_file")
@@ -68,14 +71,14 @@ describe "remote connection" do
         Net::SCP.start(@conf['remote_machine'], @conf['remote_user']) do |scp|
           Dir.chdir("spec/project_results_data/ml_trees") do
             Dir.entries(Dir.pwd).select{|f| f=~ /^RAxML/}.each do |f|
-	      puts "Uploading #{f}"
+	      #puts "Uploading #{f}"
               scp.upload!(f, @testdir)
             end
           end
         end
       end
       it "should copy data from local to remote" do
-        Net::SSH.start(@conf['remote_machine'], @conf['remote_user']) do |ssh|
+        connect_ssh do |ssh|
           dir_entries = ssh.exec!("ls #{@testdir}")
           dir_entries.should_not be_nil
           dir_entries.split("\n").size.should == 21
@@ -83,7 +86,7 @@ describe "remote connection" do
       end
       describe "can transfer data back" do
         def remote_copy(files)
-          Net::SSH.start(@conf['remote_machine'], @conf['remote_user']) do |ssh|
+          connect_ssh do |ssh|
             path = "#{@conf['local_user']}@#{@conf['local_machine']}:#{Dir.pwd}/#{@local_testdir}" 
             res = ssh.exec!("cd #{@testdir} && scp -P #{@conf['local_port']} #{files} #{path}")
           end
@@ -111,9 +114,7 @@ describe "remote connection" do
       end
     end
     after(:all) do
-      Net::SSH.start(@conf['remote_machine'], @conf['remote_user']) do |ssh|
-        res = ssh.exec!("rm -rf #{@testdir}")
-      end
+      connect_ssh{ |ssh| res = ssh.exec!("rm -rf #{@testdir}")}
     end
   end
 
