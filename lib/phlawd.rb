@@ -230,7 +230,7 @@ module PerpetualPhlawd
       end
     end
     def run_initial
-      @phlawd_iteration = PhlawdIteration.new
+      @phlawd_iteration = PhlawdIteration.new(@phlawd_runner)
       # Run phlawd sequentially
       valid_instances.each do |instance| 
         instance.run_initial unless File.exist? instance.expected_result_file 
@@ -239,7 +239,7 @@ module PerpetualPhlawd
       @phlawd_iteration 
     end
     def run_update(update_key, iteration)
-      @phlawd_iteration = PhlawdIteration.new
+      @phlawd_iteration = PhlawdIteration.new(@phlawd_runner)
       @phlawd_runner.writelog "Try to run an update for iteration #{iteration}"
       if update_required? update_key
         @phlawd_runner.writelog "Rebuild is required according to PHLAWD autoupdater"
