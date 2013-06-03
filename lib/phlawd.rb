@@ -32,7 +32,7 @@ module PerpetualPhlawd
     
     
     def expected_result_file
-      File.join @path, "#{@gene_name}.FINAL.aln.rn"
+      File.join @path, "#{@gene_name}.FINAL.aln" # .rn is for edited names
     end
     def method_missing(meth, *args, &block)
       if meth.to_s =~ /^lookup_(.+)$/
