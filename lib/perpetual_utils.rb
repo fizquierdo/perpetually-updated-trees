@@ -112,8 +112,9 @@ module PerpetualTreeUtils
   
   class FastaAlignmentCollection
     attr_accessor :aln, :part
-    def initialize(fasta_alignments, log)
-      @fasta_alignments = fasta_alignments
+    def initialize(phlawd_iteration, log)
+      @fasta_alignments = phlawd_iteration.fasta_alignments
+      @taxa_names_files = phlawd_iteration.taxa_names_files
       @log = log
       @aln = ""
       @part = ""
@@ -136,6 +137,7 @@ module PerpetualTreeUtils
       FileUtils.mkdir_p wdir 
       msa_name = opts['run_name'] + Time.now.to_i.to_s
       Dir.chdir(wdir) do
+        # create the concatenated MSA
         first_phylip = MultiPartition::Phylip.new @phylip_alignments.shift
         @log.info "Building alignment called #{msa_name}"
         msa = MultiPartition::SpeciesPhylip.new(first_phylip, @log, msa_name)
@@ -144,6 +146,14 @@ module PerpetualTreeUtils
           msa.concat_phylip(MultiPartition::Phylip.new phylip_filename)
         end
         msa.save
+        # Save the current gi files
+        @taxa_names_files.each do |gi_file|
+          if File.exist? gi_file
+            FileUtils.cp gi_file, File.basename(gi_file)
+          else
+            @log.info "Expected #{gi_file} does not exist"
+          end
+        end
       end
       @aln = File.join wdir, "#{msa_name}.phy" 
       @part = File.join wdir,  "#{msa_name}.model"

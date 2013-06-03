@@ -24,21 +24,21 @@ phlawd.print_instances
 
 log.info "### PHLAWD ITERATION 1 [INITIAL] ###"
 # Run iteration 1 of PHLAWD (generate fasta_alignment)
-fasta_alignments = phlawd.run_initial 
+phlawd_iteration = phlawd.run_initial 
 
 updater = "#{opts['run_name']}_cron_phlawd_extender.sh"
 log.info "Generating updater of GenBank DB: #{updater}"
 phlawd.generate_genbank_autoupdate(updater)
 
-if fasta_alignments.empty?
+if phlawd_iteration.empty?
   puts "Nothing to work with"
   exit
 else
-  p fasta_alignments
+  p phlawd_iteration.fasta_alignments
 end
 
 # concatenate into one single phylip
-phlawd_fastas = PerpetualTreeUtils::FastaAlignmentCollection.new fasta_alignments, log
+phlawd_fastas = PerpetualTreeUtils::FastaAlignmentCollection.new phlawd_iteration, log
 phlawd_fastas.build_supermatrix(opts, 0)
 aln = phlawd_fastas.aln
 part = phlawd_fastas.part

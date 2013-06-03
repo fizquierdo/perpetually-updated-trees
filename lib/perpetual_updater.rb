@@ -28,9 +28,9 @@ class PerpetualProject
     @log.info "Try to import phlawd updates"
     # Let phlawd take care of this:
     phlawd = PerpetualPhlawd::Phlawd.new(@opts, @log)
-    fasta_alignments = phlawd.run_update(update_key, next_iteration)
-    unless fasta_alignments.empty?
-      @phlawd_fastas = PerpetualTreeUtils::FastaAlignmentCollection.new fasta_alignments, @log
+    phlawd_iteration = phlawd.run_update(update_key, next_iteration)
+    unless phlawd_iteration.empty?
+      @phlawd_fastas = PerpetualTreeUtils::FastaAlignmentCollection.new phlawd_iteration, @log
       @phlawd_fastas.build_supermatrix(@opts, next_iteration)
       # now we do not require the build anymore
       File.open(phlawd.autoupdate_info_file_path, "a+"){|f| f.puts "REBUILD_DONE"}
