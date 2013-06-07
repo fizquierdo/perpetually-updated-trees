@@ -14,20 +14,18 @@ module PerpetualPhlawd
     def print_error_msgs(prefix)
       @error_msgs.each {|m| $stderr.puts prefix + m}
     end
-    def run_initial
-      # Ensure runfile exists
+    def run_and_log(cmd, iteration = 0)
       Dir.chdir(@path) do 
-        @log.systemlog("#{@PHLAWD} assemble #{runfile}", "PHLAWD STDOUT>>")
-        @log.info("Done with instance #{@gene_name}", "<<PHLAWD STDOUT")
+        @log.systemlog(cmd, "PHLAWD STDOUT instance #{@gene_name}, iteration #{iteration} at #{Time.now.to_s}>>")
+        @log.info("Done with instance #{@gene_name}, iteration #{iteration} at #{Time.now.to_s}", "<<PHLAWD STDOUT")
       end
     end
+    def run_initial
+      run_and_log "#{@PHLAWD} assemble #{runfile}"
+    end
     def run_update(iteration)
-      Dir.chdir(@path) do 
-        generate_update_runfile
-        cmd = "#{@PHLAWD} assemble #{update_runfile}"
-        @log.systemlog("#{cmd} >> PhlawdAssembleUpdateDBinfo.log", "PHLAWD STDOUT>>")
-        @log.info("Done with instance #{@gene_name}", "<<PHLAWD STDOUT")
-      end
+      generate_update_runfile
+      run_and_log("#{@PHLAWD} assemble #{update_runfile} >> PhlawdAssembleUpdateDBinfo.log", iteration)
     end
     
     def expected_result_file
