@@ -1,7 +1,7 @@
 # Info about cluster
 cores_per_node: 16     # number of available cores per node 
 mem_per_node: 31000    # MB 
-project: TG-MCB110022  # a project name (see slurm template)
+project: your_project_name
 submission: slurm      # sge to be supported soon
 # Installed binaries, absolute paths in remote machine
 parsimonator: /your/path/to/parsimonator  
