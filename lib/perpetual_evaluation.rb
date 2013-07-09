@@ -62,7 +62,10 @@ class ProjectResults
   end
   def timing_info_files
     # ignore the timing related to the SCORING info
-    map_to_info_file entries.grep(/^RAxML_info/).delete_if{|f| f =~ /SCORING/}
+    timing_files = map_to_info_file entries.grep(/^RAxML_info/).delete_if{|f| f =~ /SCORING/}
+    # reject the timing files without a time
+    timing_files = timing_files.select{|info| info.has_search_time?}
+    timing_files
   end
   def scoring_info_files
     map_to_info_file entries.grep(/info\.SCORING/)
@@ -76,6 +79,11 @@ class InfoFile
   def initialize(filename)
     @filename = filename
     @lines = File.open(filename).readlines
+  end
+  def has_search_time?
+   key = "Overall accumulated Time"
+   matches = @lines.grep /#{key}/
+   matches.size == 1
   end
   def total_search_time
     find_val('Overall accumulated Time') / 3600.0

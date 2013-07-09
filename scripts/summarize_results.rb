@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-$LOAD_PATH.unshift "/opt/perpetualtree/lib"
+$LOAD_PATH.unshift "/home/Fernando/perpetualtree/github/perpetually-updated-trees/lib"
 require 'rnewick'
 require 'floatstats'
 require 'perpetual_evaluation'
@@ -36,6 +36,7 @@ r = PerpetualTreeEvaluation::ProjectResults.new :info_files_dir => results_dir,
  						:expected_set => 30
 Dir.chdir(results_dir) do 
   Dir.glob("**/*").select{|f| f =~ /\/bunch_.+\/ml_trees$/}.sort.each do |d|
+    next if d =~ /failed/
     r.info_files_dir = d
     puts "\nDir #{r.info_files_dir}"
     puts "WARNING: Not all #{r.expected_set} trees have been collected" unless r.has_collected_all_trees?
