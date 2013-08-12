@@ -1,4 +1,4 @@
-# PUmPER Phylogenies Updated PERperpetually
+## PUmPER: Phylogenies Updated PERperpetually
 
 PUmPER is a framework to build automated pipelines that can perpetually update phylogenetic trees. PUmPER makes use of PHLAWD and RAxML-Light to perpetually update Genbank datasets and simultaneously update inferred phylogenetic trees.
 
