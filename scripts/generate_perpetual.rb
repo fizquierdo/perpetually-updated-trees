@@ -61,7 +61,7 @@ BUNCH=#{@best_bunch_size}
 CONF=#{standalone_config_name}
 
 # Execute standalone
-PLANTER_PATH --name #{@name} --initial-phy $INITIAL_PHY --parsi-size $PARSI --bunch-size $BUNCH --standalone-config-file $CONF 
+PUMPER_PATH --name #{@name} --initial-phy $INITIAL_PHY --parsi-size $PARSI --bunch-size $BUNCH --standalone-config-file $CONF 
 
 # Execute remotely with --remote
 # Configure remote.config.yml

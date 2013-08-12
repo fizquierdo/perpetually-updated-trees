@@ -42,14 +42,14 @@ task :install do
 
   repl = [{:base => /LOAD_PATH\.unshift.+$/, :repl => %{LOAD_PATH.unshift "#{install_dir}/lib"}}]
   # main script
-  generate_executable("put.rb", "PLANTER", bin_dir, repl)
+  generate_executable("put.rb", "PUMPER", bin_dir, repl)
 
   # script for finalizing iterations 
-  generate_executable("scripts/finish_iteration.rb", "PLANTER_FINISH", bin_dir, repl)
+  generate_executable("scripts/finish_iteration.rb", "PUMPER_FINISH", bin_dir, repl)
 
   # the cluster and remote config and the templates related
   %w(default.config.yml remote_config.yml *.erb).each{ |f| syscopy "config/cluster/#{f}", templatedir}
-  repl_elems =  [{:base => "PLANTER_FINISH",  :repl => "#{bin_dir}/PLANTER_FINISH"}]
+  repl_elems =  [{:base => "PUMPER_FINISH",  :repl => "#{bin_dir}/PUMPER_FINISH"}]
   repl_file  =  "#{templatedir}/template_raxmllight.slurm.erb"
   replace_in_file repl_file, repl_file, repl_elems
   # the ruby libraries
@@ -67,9 +67,9 @@ task :install do
   generate_executable("scripts/summarize_results.rb", "summarize_results.rb", scriptdir, repl)
   # script for generation 
   repl = [{:base => /@install_path=.+$/, :repl => %{@install_path="#{install_dir}"}},
-          {:base => /^put:.+$/,          :repl => %{put: #{bin_dir}/PLANTER}},
-          {:base => "PLANTER_PATH",      :repl => "#{bin_dir}/PLANTER"}]
-  generate_executable("scripts/generate_perpetual.rb", "PLANTER_GENERATE", bin_dir, repl)
+          {:base => /^put:.+$/,          :repl => %{put: #{bin_dir}/PUMPER}},
+          {:base => "PUMPER_PATH",      :repl => "#{bin_dir}/PUMPER"}]
+  generate_executable("scripts/generate_perpetual.rb", "PUMPER_GENERATE", bin_dir, repl)
 end
 
 desc "show current configuration"
@@ -83,10 +83,10 @@ desc "Run generator for the gettin-started tutorial"
 task :tutorial, :parsi, :best do |t, args|
   wdir = "ztutorial_from_rake_" + Time.now.to_i.to_s
   args.with_defaults(:parsi => 3, :best => 1)
-  update_cmd = '../testinstall/bin/PLANTER --name loni --update-phy ../testdata/lonicera_23taxa.rbcL.phy --parsi-size 2 --bunch-size 1 --standalone-config-file standalone_loni.yml'
+  update_cmd = '../testinstall/bin/PUMPER --name loni --update-phy ../testdata/lonicera_23taxa.rbcL.phy --parsi-size 2 --bunch-size 1 --standalone-config-file standalone_loni.yml'
   FileUtils.mkdir wdir
   Dir.chdir(wdir) do 
-    system "../testinstall/bin/PLANTER_GENERATE loni #{args[:best]} #{args[:parsi]} ../testdata/lonicera_10taxa.rbcL.phy"
+    system "../testinstall/bin/PUMPER_GENERATE loni #{args[:best]} #{args[:parsi]} ../testdata/lonicera_10taxa.rbcL.phy"
     system "echo #{update_cmd} > update_loni.sh"
   end
 end
@@ -96,7 +96,7 @@ task :pipeline do
   wdir = "zpipeline_from_rake_" + Time.now.to_i.to_s
   FileUtils.mkdir wdir
   Dir.chdir(wdir) do 
-    system "../testinstall/bin/PLANTER_GENERATE pipeline"
+    system "../testinstall/bin/PUMPER_GENERATE pipeline"
     system "ln ../testinstall/perpetualinstall/data/pln.db alignments/GenBank/pln.db"
   end
 end
