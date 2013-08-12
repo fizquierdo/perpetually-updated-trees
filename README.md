@@ -6,5 +6,5 @@ You can learn how to setup the system at the [wiki page for installation](https:
 
 To get started, and build your first PUmPER phylogenetic pipeline, you can follow this [tutorial](https://github.com/fizquierdo/perpetually-updated-trees/wiki/Getting-Started) 
 
-PUmPER is work-in-progress and under continuous development. 
+PUmPER is work-in-progress, available under the GNU GPL license, and under continuous development. 
 
