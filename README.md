@@ -1,10 +1,10 @@
-perpetually-updated-trees
-=========================
+# PUmPER Phylogenies Updated PERperpetually
 
-The perpetual tree updater is an automated pipeline which makes use of [PHLAWD](http://www.phlawd.net) and [RAxML-Light](https://github.com/stamatak/RAxML-Light-1.0.5) to perpetually update Genbank datasets and simultaneously update inferred phylogenetic trees.
+PUmPER is a framework to build automated pipelines that can perpetually update phylogenetic trees. PUmPER makes use of PHLAWD and RAxML-Light to perpetually update Genbank datasets and simultaneously update inferred phylogenetic trees.
 
 You can learn how to setup the system at the [wiki page for installation](https://github.com/fizquierdo/perpetually-updated-trees/wiki/Setup)
 
-To get started, you can follow this [tutorial](https://github.com/fizquierdo/perpetually-updated-trees/wiki/Getting-Started) 
+To get started, and build your first PUmPER phylogenetic pipeline, you can follow this [tutorial](https://github.com/fizquierdo/perpetually-updated-trees/wiki/Getting-Started) 
 
-This is work-in-progress and under continuous development. 
+PUmPER is work-in-progress and under continuous development. 
+
