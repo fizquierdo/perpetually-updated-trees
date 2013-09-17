@@ -21,6 +21,9 @@ module PerpetualNewick
     def support_values
       @str.gsub("0.0;","").scan(/\[([0-9]+)\]/).map{|n| n[0].to_i}
     end
+    def partition_support_values
+      @str.gsub("0.0;","").scan(/\[[\d+\,]+\d+\]/)
+    end
     def branch_lengths
       @str.gsub("0.0;","").scan(/:([0-9]+\.[0-9]+)/).map{|n| n[0].to_f}
     end
