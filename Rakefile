@@ -7,6 +7,9 @@ def syscopy(from, to)
   #system "sudo cp #{from} #{to}"
   system "cp #{from} #{to}"
 end
+def syslink(from, to)
+  system "ln #{from} #{to}"
+end
 def sysmkdir(dir)
   #system %{sudo mkdir -p #{dir}}
   FileUtils.mkdir_p dir
@@ -56,6 +59,8 @@ task :install do
   syscopy "lib/*.rb", libdir
   # the phlawd auto-updater
   syscopy "scripts/autoupdate_phlawd_db.py", scriptdir
+  # the raxml binaries
+  syslink "bin/*", bin_dir
   # the basic example
   generate_executable("scripts/run_perpetual_example.rb", "run_perpetual_example.rb", scriptdir, repl)
   # the data for the example

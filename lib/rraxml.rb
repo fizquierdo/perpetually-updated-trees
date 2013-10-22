@@ -68,14 +68,14 @@ module PerpetualTreeMaker
     def run
       self.before_run
       #raise "#{@binary} not found" unless binary_available?
-      if not binary_available?
+      #if not binary_available?
         # TODO check out how to do this with the correct path
         # use the compiled version from src
         @binary = File.join(@binary_path, @binary)
         raise "#{@binary} not found" unless File.exists?(@binary)
-      end
+      #end
       # TODO write this to a log
-      #puts "#{@binary} #{@ops}" unless @ops =~ /RUN_NAME/ 
+      puts "#{@binary} #{@ops}" unless @ops =~ /RUN_NAME/ 
       system "(#{@binary} #{@ops} 2> #{@stderr}) > #{@stdout}"
       self.after_run
     end
