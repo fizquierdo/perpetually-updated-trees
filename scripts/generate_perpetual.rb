@@ -206,7 +206,9 @@ if not File.exist?(p.remote_config_file_name)
   if File.exist? remote_config_file
     FileUtils.copy remote_config_file, Dir.pwd
   else
-    puts "WARNING: #{remote_config_file} not found, please write the remote_config file or do not use remote mode (remote: false) in the standalone*.yml file"
+    puts "Using Standalone mode  (remote: false in standalone.yml file)"
+    #puts "Please write the remote_config file or do not use remote mode (remote: false) in the standalone*.yml file"
+    #puts "WARNING: #{remote_config_file} not found"
   end
 end
 
