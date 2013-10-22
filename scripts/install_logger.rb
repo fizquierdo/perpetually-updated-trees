@@ -15,6 +15,7 @@ class InstallLogger
     exit
   end
   def exec(cmd, header)
+    @log.info "Exec #{header}: #{cmd}"
     stderrfile = "#{header}_tmp_stderr"
     IO.popen("#{cmd} 2> #{stderrfile}") do |io| 
       while(line = io.gets) do 
