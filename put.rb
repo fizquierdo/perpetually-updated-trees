@@ -6,7 +6,7 @@ require 'trollop'
 require 'fileutils'
 require 'starter'    
 require 'experiment'    
-require 'pp'
+#require 'pp'
 
 #  Perpetually updated tree from the command line
 # :num_parsi_trees : defaults to 3, will the the #of parsimony trees -N by parsimonator
@@ -14,30 +14,6 @@ require 'pp'
 
 expfile = File.expand_path "experiments.yml"
 
-fakefiles_options = {
-  '9999' => {:initial_seqs => 4000,
-    :min_size_update => 1000,
-    :max_size_update => 2000 
-  },
-  '10000' => {:initial_seqs => 4000,
-    :min_size_update => 1000,
-    :max_size_update => 2000 
-  },
-  '5000' => {:initial_seqs => 2000,
-    :min_size_update => 300,
-    :max_size_update => 700 
-  },
-  '1000' => {
-  :initial_seqs => 500,
-  :min_size_update => 60,
-  :max_size_update => 120 
-  },
-  '20' => {
-  :initial_seqs => 10,
-  :min_size_update => 3,
-  :max_size_update => 7
-  }
-}
 DEFAULT_NUM_BEST_ML_TREES = 2
 DEFAULT_NUM_NEW_PARSI_TREES = 3
 opts = Trollop::options do
@@ -52,10 +28,8 @@ opts = Trollop::options do
   opt :bunch_size, "Number of best ML trees at the end of iteration ", :default => DEFAULT_NUM_BEST_ML_TREES
 
   opt :remote, "Use cluster resources on remote machine", :default => false
-  #opt :outliers, "Use an outliers file to re-adapt alignment and trees at last iter of given experiment", :default => ""
 
   opt :num_threads, "number of threads", :default => ""
-  opt :fake_phy, "first generate fake updates from initial", :default => ""
   opt :search_std, "Conduct a standard RAxML search on given initial alignment", :default => false 
   opt :remote_config_file, "Paths and configuration for remote cluster", :default => "remote_config.yml" 
   opt :standalone_config_file, "Paths and configuration", :default => "standalone.yml" 
@@ -80,26 +54,6 @@ def find_iteration_id(exp_name)
 end
 
 list = ExperimentTable::ExperimentList.new(expfile)
-# Process newick and phylip files so that outliers 
-=begin
-if not opts[:outliers].empty?
-  if opts[:name].empty? 
-    puts "Specify the name of the enperiment with --name"
-  else
-    outliers_file =  opts[:outliers]
-    exp_name = opts[:name]
-    iter = find_iteration_id(exp_name)
-    puts "We will remove the outliers in #{outliers_file} of iteration #{iter} of experiment #{exp_name}"
-    iteration_id, last_dir = find_iteration_id_and_last_dir(exp_name)
-    updater = TreeBunchStarter.new(:base_dir => last_dir, 
-                                   :update_id => iteration_id
-                                   ) 
-    taxa = File.open(outliers_file).readlines.map{|t| t.chomp!}
-    updater.prune_taxa(taxa)
-  end
-  exit
-end
-=end
 
 # remove
 if not opts[:remove].empty?
@@ -115,24 +69,7 @@ if opts[:name].empty?
   end
   exit
 end
-# generator (this must cover all the functionality related to simulations)
-if not opts[:fake_phy].empty? 
-  ds_key = File.basename(opts[:fake_phy]).to_s
-  if fakefiles_options.keys.include?(ds_key) and File.exist?(opts[:fake_phy])
-    if list.add(opts) 
-      puts "Generating the fake files..." 
-      e = ExperimentTable::Experiment.new(opts[:name], File.expand_path(Dir.pwd))
-      if e.setup_dirs
-        expand_options = {:phylip => opts[:fake_phy], :updates_as_full_alignments => true}
-        expand_options.merge! fakefiles_options[ds_key]
-        e.expand_with_updates(expand_options)
-      end
-    end
-  else
-    puts "Unknwon test dataset"
-  end
-  exit
-end
+
 # check partition file really exists
 if not opts[:partitions].empty? 
   if not File.exist?(opts[:partitions])
