@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require 'fileutils'
 load File.join File.dirname(__FILE__), 'install_logger.rb'
+load File.join File.dirname(__FILE__), '../lib/configuration.rb'
 
 log = InstallLogger.new("pumper_dependencies.log")
 
@@ -99,4 +100,20 @@ programs.each do |key, program|
 end
 log.info "All RAxML-family dependencies... OK\n"
 
+# Now install the PUmPER executables using the Rakefile and according to the configuration
+opts = PerpetualTreeConfiguration::Configurator.new("config/local_config.yml").conf
+pumper_install_dir = File.expand_path opts['install_dir']
+pumper_bin_dir     = File.expand_path opts['bin_dir'] 
+
+log.info "\nInstalling PUmPER in #{pumper_install_dir}"
+log.exec "rake install", "PUmPER_installation"
+%w(PUMPER  PUMPER_FINISH  PUMPER_GENERATE).each do |pumper|
+  if File.exist? File.join pumper_bin_dir, pumper
+    log.info "#{pumper} is ready at #{pumper_bin_dir}"
+  else
+    log.error "#{pumper} could not be found in #{pumper_bin_dir}. Check configuration and Rakefile?"
+  end
+end
+
+log.info "\nPUmPER has beed successfully installed. Have a look at the README to get started."
 log.close
