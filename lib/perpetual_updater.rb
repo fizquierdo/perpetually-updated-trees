@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require "starter"
+require "starter_remote"
 require "experiment"
 require 'fileutils'
 require 'perpetual_utils'

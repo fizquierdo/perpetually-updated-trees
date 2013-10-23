@@ -29,17 +29,14 @@ def generate_executable(basefile, execfile, bin_dir,  repl)
   FileUtils.rm execfile
 end
 
-
-
-desc "Install a ruby executable, copy current templates/configs"
-task :install do
+desc "Install the standalone version" 
+task :install_standalone do
+  # Configuration
   install_dir = File.expand_path opts['install_dir']
   bin_dir     = File.expand_path opts['bin_dir'] 
-  templatedir = File.join install_dir, "templates"
   scriptdir   = File.join install_dir, "scripts"
   libdir      = File.join install_dir, "lib"
-  datadir     = File.join install_dir, "data" # TODO not sure you need this
-  [bin_dir, install_dir, templatedir, libdir, scriptdir, datadir].each{|dir| sysmkdir dir}
+  [bin_dir, install_dir, libdir, scriptdir].each{|dir| sysmkdir dir}
   raise "Path for binaries bin_path not available in config file" if bin_dir.nil? 
   raise "#{bin_dir} not found" unless File.exist? bin_dir
 
@@ -47,27 +44,55 @@ task :install do
   # main script
   generate_executable("put.rb", "PUMPER", bin_dir, repl)
 
+  # the ruby libraries
+  syscopy "lib/*.rb", libdir  # TODO you dont need to copy the remote functionality here
+  # the raxml binaries
+  syslink "bin/*", bin_dir
+  # the basic example
+  generate_executable("scripts/run_perpetual_example.rb", "run_perpetual_example.rb", scriptdir, repl)
+  FileUtils.cp_r "testdata", install_dir
+  # the iteration summarizer 
+  generate_executable("scripts/summarize_results.rb", "summarize_results.rb", scriptdir, repl)
+  # script for generation 
+  repl = [{:base => /@install_path=.+$/, :repl => %{@install_path="#{install_dir}"}},
+          {:base => /^put:.+$/,          :repl => %{put: #{bin_dir}/PUMPER}},
+          {:base => "PUMPER_PATH",      :repl => "#{bin_dir}/PUMPER"}]
+  generate_executable("scripts/generate_perpetual.rb", "PUMPER_GENERATE", bin_dir, repl)
+end
+
+desc "Install the remote version" 
+task :install_remote do
+  # Configuration
+  install_dir = File.expand_path opts['remote_install_dir']
+  bin_dir     = File.expand_path opts['remote_bin_dir'] 
+  scriptdir   = File.join install_dir, "scripts"
+  libdir      = File.join install_dir, "lib"
+  templatedir = File.join install_dir, "templates"
+  [bin_dir, install_dir, templatedir, libdir, scriptdir].each{|dir| sysmkdir dir}
+  raise "Path for binaries bin_path not available in config file" if bin_dir.nil? 
+  raise "#{bin_dir} not found" unless File.exist? bin_dir
+
+  repl = [{:base => /LOAD_PATH\.unshift.+$/, :repl => %{LOAD_PATH.unshift "#{install_dir}/lib"}},
+          {:base => /require \'starter\'/, :repl => %{require \'starter_remote\'}}]
+  # main script
+  generate_executable("put.rb", "PUMPER", bin_dir, repl)
   # script for finalizing iterations 
   generate_executable("scripts/finish_iteration.rb", "PUMPER_FINISH", bin_dir, repl)
+
+  # the ruby libraries
+  syscopy "lib/*.rb", libdir
 
   # the cluster and remote config and the templates related
   %w(default.config.yml remote_config.yml *.erb).each{ |f| syscopy "config/cluster/#{f}", templatedir}
   repl_elems =  [{:base => "PUMPER_FINISH",  :repl => "#{bin_dir}/PUMPER_FINISH"}]
   repl_file  =  "#{templatedir}/template_raxmllight.slurm.erb"
   replace_in_file repl_file, repl_file, repl_elems
-  # the ruby libraries
-  syscopy "lib/*.rb", libdir
   # the phlawd auto-updater
   syscopy "scripts/autoupdate_phlawd_db.py", scriptdir
-  # the raxml binaries
-  syslink "bin/*", bin_dir
-  # the basic example
+
+  # the basic example (TODO check if makes sense for remote, do another one?)
   generate_executable("scripts/run_perpetual_example.rb", "run_perpetual_example.rb", scriptdir, repl)
-  # the data for the example
-  #puts "Copying testdata"
-  #syscopy "testdata/*", datadir
   FileUtils.cp_r "testdata", install_dir
-  #puts "Copying done"
   # the iteration summarizer 
   generate_executable("scripts/summarize_results.rb", "summarize_results.rb", scriptdir, repl)
   # script for generation 

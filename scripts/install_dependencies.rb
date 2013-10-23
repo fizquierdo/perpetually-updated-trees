@@ -108,7 +108,7 @@ pumper_install_dir = File.expand_path opts['install_dir']
 pumper_bin_dir     = File.expand_path opts['bin_dir'] 
 
 log.info "\nInstalling PUmPER in #{pumper_install_dir}"
-log.exec "rake install", "PUmPER_installation"
+log.exec "rake install_standalone", "PUmPER_installation"
 %w(PUMPER  PUMPER_FINISH  PUMPER_GENERATE).each do |pumper|
   if File.exist? File.join pumper_bin_dir, pumper
     log.info "#{pumper} is ready at #{pumper_bin_dir}"

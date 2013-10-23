@@ -1,3 +1,9 @@
 # Default configuration for installation
+
+# STANDALONE: Everything in one machine
 bin_dir: pumper_standalone/bin                       # add to $PATH ?
-install_dir: pumper_standalone                       # configured code, templates
+install_dir: pumper_standalone                       # code 
+
+# REMOTE: PUMPER will only use this machine to run PHLAWD and offload RAxML to cluster/
+remote_bin_dir: pumper_remote/bin                       
+remote_install_dir: pumper_remote                    # code, templates                  
