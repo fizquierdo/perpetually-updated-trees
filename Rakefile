@@ -45,7 +45,10 @@ task :install_standalone do
   generate_executable("put.rb", "PUMPER", bin_dir, repl)
 
   # the ruby libraries
-  syscopy "lib/*.rb", libdir  # TODO you dont need to copy the remote functionality here
+  %w(configuration perpetual_evaluation phlawd rphylip  experiment rraxml   trollop
+  floatstats perpetual_utils rnewick starter).each do |filename|
+    syscopy "lib/#{filename}.rb", libdir  
+  end
   # the raxml binaries
   syslink "bin/*", bin_dir
   # the basic example
@@ -80,7 +83,11 @@ task :install_remote do
   generate_executable("scripts/finish_iteration.rb", "PUMPER_FINISH", bin_dir, repl)
 
   # the ruby libraries
-  syscopy "lib/*.rb", libdir
+  %w(configuration perpetual_evaluation phlawd rphylip starter_remote
+  experiment     perpetual_updater    remote_job  trollop
+  floatstats     perpetual_utils      rnewick).each do |filename|
+    syscopy "lib/#{filename}.rb", libdir  
+  end
 
   # the cluster and remote config and the templates related
   %w(default.config.yml remote_config.yml *.erb).each{ |f| syscopy "config/cluster/#{f}", templatedir}
