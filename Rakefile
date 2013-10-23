@@ -8,7 +8,7 @@ def syscopy(from, to)
   system "cp #{from} #{to}"
 end
 def syslink(from, to)
-  system "ln #{from} #{to}"
+  system "ln --force #{from} #{to}"
 end
 def sysmkdir(dir)
   #system %{sudo mkdir -p #{dir}}
@@ -84,14 +84,19 @@ task :conf do
   end
 end
 
+pumper_bin_dir     = File.expand_path opts['bin_dir'] 
+pumper_install_dir = File.expand_path opts['install_dir']
+
 desc "Run generator for the gettin-started tutorial"
 task :tutorial, :parsi, :best do |t, args|
   wdir = "ztutorial_from_rake_" + Time.now.to_i.to_s
   args.with_defaults(:parsi => 3, :best => 1)
-  update_cmd = '../testinstall/bin/PUMPER --name loni --update-phy ../testdata/lonicera_23taxa.rbcL.phy --parsi-size 2 --bunch-size 1 --standalone-config-file standalone_loni.yml'
   FileUtils.mkdir wdir
   Dir.chdir(wdir) do 
-    system "../testinstall/bin/PUMPER_GENERATE loni #{args[:best]} #{args[:parsi]} ../testdata/lonicera_10taxa.rbcL.phy"
+    # Generate the initial iteration script with the PUmPER generator
+    system "#{pumper_bin_dir}/PUMPER_GENERATE loni #{args[:best]} #{args[:parsi]} ../testdata/lonicera_10taxa.rbcL.phy"
+    # Generate the update iteration script directly calling PUmPER 
+    update_cmd = "#{pumper_bin_dir}/PUMPER --name loni --update-phy ../testdata/lonicera_23taxa.rbcL.phy --parsi-size 2 --bunch-size 1 --standalone-config-file standalone_loni.yml"
     system "echo #{update_cmd} > update_loni.sh"
   end
 end

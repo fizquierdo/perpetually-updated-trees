@@ -6,7 +6,6 @@ require 'trollop'
 require 'fileutils'
 require 'starter'    
 require 'experiment'    
-#require 'pp'
 
 #  Perpetually updated tree from the command line
 # :num_parsi_trees : defaults to 3, will the the #of parsimony trees -N by parsimonator

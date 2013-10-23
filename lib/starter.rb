@@ -1,19 +1,21 @@
 #!/usr/bin/env ruby
 
+remote_mode = false
 
 # code import
 require 'remote_job'
-# custom gems
 require 'rraxml'
 require 'rnewick'
 require 'rphylip'
 require 'perpetual_evaluation'
+
 # gems
 require 'logger'   
-#require 'net/ssh'
-#require 'net/scp'
-#
-#require 'pp'
+if remote_mode 
+  require 'net/ssh'
+  require 'net/scp'
+end
+
 
 class CycleController
   attr_reader :opts
@@ -35,21 +37,21 @@ class CycleController
   end
   # NOTE these requirements are specific for our system, should be on a config file
   def parsimonator_requirements
-   bytes_inner =  @numtaxa.to_f * @seqlen.to_f
-   security_factor = 3.0
-   required_MB = bytes_inner * security_factor * 1E-6
-   required_MB = 16 unless required_MB > 16 
-   @log.info "Parsimonator requirements in MB: #{required_MB}"
-   required_MB.to_i
+    bytes_inner =  @numtaxa.to_f * @seqlen.to_f
+    security_factor = 3.0
+    required_MB = bytes_inner * security_factor * 1E-6
+    required_MB = 16 unless required_MB > 16 
+    @log.info "Parsimonator requirements in MB: #{required_MB}"
+    required_MB.to_i
   end
   def raxmllight_requirements
-   #(n-2) * m * ( 8 * 4 )
-   bytes_inner =  @numtaxa.to_f * @seqlen.to_f  * 8 * 4
-   security_factor = 1.3
-   required_MB = bytes_inner * security_factor * 1E-6
-   required_MB = 16 unless required_MB > 16 
-   @log.info "Raxml Light requirements in MB: #{required_MB}"
-   required_MB.to_i
+    #(n-2) * m * ( 8 * 4 )
+    bytes_inner =  @numtaxa.to_f * @seqlen.to_f  * 8 * 4
+    security_factor = 1.3
+    required_MB = bytes_inner * security_factor * 1E-6
+    required_MB = 16 unless required_MB > 16 
+    @log.info "Raxml Light requirements in MB: #{required_MB}"
+    required_MB.to_i
   end
 
   def build_batch_options(dataset_filename, model_filename)
@@ -87,11 +89,11 @@ class CycleController
         scp.upload! @opts[:partition_file], @opts[:alignment_remote_dir] if File.exist? @opts[:partition_file]
         # send the starting trees
         unless @opts[:prev_trees_paths].nil?
-    	  @opts[:prev_trees_paths].each do |path| 
-	    @log.info "Sending Tree #{path} to #{@opts[:parsimony_remote_dir]}"
-	    scp.upload! path, @opts[:parsimony_remote_dir]
+          @opts[:prev_trees_paths].each do |path| 
+            @log.info "Sending Tree #{path} to #{@opts[:parsimony_remote_dir]}"
+            scp.upload! path, @opts[:parsimony_remote_dir]
           end
-	end
+        end
       end
     end
     # Now use Jobber to populate a template and send it
@@ -200,8 +202,8 @@ class TreeBunchStarter
       if @remote
         logput "Exp #{opts[:exp_name]}, your cluster will take care of this iteration no #{@update_id}"
         c = CycleController.new(:update_id => @update_id, 
-	                        :phy => phylip_dataset, 
-	                        :partition_file => @partition_file, 
+                                :phy => phylip_dataset, 
+                                :partition_file => @partition_file, 
                                 :num_parsi_trees => num_parsi_trees, 
                                 :num_ptrees => num_iteration_trees, 
                                 :prev_trees_paths => prev_trees_paths, 
@@ -215,14 +217,14 @@ class TreeBunchStarter
                                 :iteration_results_name => @iteration_results_name, 
                                 :exp_name => opts[:exp_name]
                                )
-        
-	c.run_as_batch_remote # send prev_trees to remote machine!
-        "cluster"
+
+                               c.run_as_batch_remote # send prev_trees to remote machine!
+                               "cluster"
       else
         logput "****** Start iteration no #{@update_id} ********"
         logput "step 1 of 2 : Parsimony starting trees #{num_parsi_trees} each\n----"
         if opts[:initial_iteration]
-	        generate_parsimony_trees(num_parsi_trees)
+          generate_parsimony_trees(num_parsi_trees)
           parsimony_trees_dir = @parsimony_trees_dir
         else
           update_parsimony_trees(num_parsi_trees, prev_trees)
@@ -239,74 +241,74 @@ class TreeBunchStarter
     end
   end
   def search_std(num_gamma_trees = nil)
-        search_opts = {
-          :phylip => @phylip,
-          :partition_file => @partition_file,
-          :outdir => @ml_trees_dir,
-          :num_gamma_trees => num_gamma_trees || 1, 
-          :stderr => File.join(@ml_trees_dir, "err"),
-          :stdout => File.join(@ml_trees_dir, "info"),
-          :name => "std_GAMMA_search" 
-        }
-        search_opts.merge!({:num_threads => @num_threads}) if @num_threads.to_i > 0
-        r = RaxmlGammaSearch.new(search_opts)
-        logput "Start ML search from scratch with #{num_gamma_trees} trees"
-        r.run
-        bestLH = File.open(r.stdout).readlines.find{|l| l =~ /^Final GAMMA-based Score of best/}.chomp.split("tree").last
-        logput "Done ML search from scratch with #{num_gamma_trees} trees"
-        bestLH
+    search_opts = {
+      :phylip => @phylip,
+      :partition_file => @partition_file,
+      :outdir => @ml_trees_dir,
+      :num_gamma_trees => num_gamma_trees || 1, 
+      :stderr => File.join(@ml_trees_dir, "err"),
+      :stdout => File.join(@ml_trees_dir, "info"),
+      :name => "std_GAMMA_search" 
+    }
+    search_opts.merge!({:num_threads => @num_threads}) if @num_threads.to_i > 0
+    r = RaxmlGammaSearch.new(search_opts)
+    logput "Start ML search from scratch with #{num_gamma_trees} trees"
+    r.run
+    bestLH = File.open(r.stdout).readlines.find{|l| l =~ /^Final GAMMA-based Score of best/}.chomp.split("tree").last
+    logput "Done ML search from scratch with #{num_gamma_trees} trees"
+    bestLH
   end
   private
-    def check_options(opts)
-      supported_opts = [:num_parsi_trees, :num_bestML_trees, :exp_name, :cycle_batch_script, :initial_iteration]
-      opts.keys.each do |key|
-        unless supported_opts.include?(key)
-          logput "Option #{key} is unknwon"
-        end
+  def check_options(opts)
+    supported_opts = [:num_parsi_trees, :num_bestML_trees, :exp_name, :cycle_batch_script, :initial_iteration]
+    opts.keys.each do |key|
+      unless supported_opts.include?(key)
+        logput "Option #{key} is unknwon"
       end
     end
-    def generate_parsimony_trees(num_parsi_trees)
-      logput "Starting parsimony with #{num_parsi_trees} trees" 
-      num_parsi_trees.times do |i|
-              seed = i + 123 # NOTE the real seed in the remote runs depends on how the runs are distributed, so i am not sure we can exactly replicate the same seeds...
-              parsimonator_opts = {
-		:phylip => @phylip,
-		#:num_trees => num_parsi_trees,
-		:num_trees => 1,
-		:seed => seed,
-		:outdir => @parsimony_trees_dir,
-		:stderr => File.join(@parsimony_trees_dir, "err"),
-		:stdout => File.join(@parsimony_trees_dir, "info"),
-		#:name => "parsimony_initial"
-		:name => "parsimony_initial_s#{seed}"
-	      }
-              # NOTE this will generate a directory called test/outdir where some tests will be run, that is in Raxml.before_run and the dir will end up empty, can be safely removed or ignored. 
-	      parsi = PerpetualTreeMaker::Parsimonator.new(parsimonator_opts)  
-	      logput "Start computing parsimony trees of initial bunch"
-	      parsi.run
-      end
-      logput "Done with parsimony trees of initial bunch"
+  end
+  def generate_parsimony_trees(num_parsi_trees)
+    logput "Starting parsimony with #{num_parsi_trees} trees" 
+    num_parsi_trees.times do |i|
+      seed = i + 123 # NOTE the real seed in the remote runs depends on how the runs are distributed, so i am not sure we can exactly replicate the same seeds...
+      parsimonator_opts = {
+        :phylip => @phylip,
+        #:num_trees => num_parsi_trees,
+        :num_trees => 1,
+        :seed => seed,
+        :outdir => @parsimony_trees_dir,
+        :stderr => File.join(@parsimony_trees_dir, "err"),
+        :stdout => File.join(@parsimony_trees_dir, "info"),
+        #:name => "parsimony_initial"
+        :name => "parsimony_initial_s#{seed}"
+      }
+      # NOTE this will generate a directory called test/outdir where some tests will be run, that is in Raxml.before_run and the dir will end up empty, can be safely removed or ignored. 
+      parsi = PerpetualTreeMaker::Parsimonator.new(parsimonator_opts)  
+      logput "Start computing parsimony trees of initial bunch"
+      parsi.run
     end
-    def update_parsimony_trees(num_parsi_trees, trees)
-      trees.each_with_index do |parsi_start_tree, i|
-        logput "Starting new parsimony tree with #{parsi_start_tree} trees" 
-        parsimonator_opts = {
-          :phylip => @phylip_updated,
-          :num_trees => num_parsi_trees,
-          :newick => File.join(@parsimony_trees_dir, parsi_start_tree),
-          :outdir => @parsimony_trees_out_dir,
-          :stderr => File.join(@parsimony_trees_out_dir, "err_#{parsi_start_tree}"),
-          :stdout => File.join(@parsimony_trees_out_dir, "info_#{parsi_start_tree}"),
-          :name => "u#{@update_id}_#{parsi_start_tree}"
-        }
-        parsi =PerpetualTreeMaker::Parsimonator.new(parsimonator_opts)  
-        logput "Start computing parsimony trees of #{parsi_start_tree}, #{i+1} of #{trees.size}"
-        parsi.run
-        logput "run with options #{parsi.ops.to_s}"
-        logput "Done with parsimony trees of #{parsi_start_tree}, #{i+1} of #{trees.size}"
-      end 
-    end
-    def generate_ML_trees(starting_trees_dir, phylip, num_bestML_trees, partition_file)
+    logput "Done with parsimony trees of initial bunch"
+  end
+  def update_parsimony_trees(num_parsi_trees, trees)
+    trees.each_with_index do |parsi_start_tree, i|
+      logput "Starting new parsimony tree with #{parsi_start_tree} trees" 
+      parsimonator_opts = {
+        :phylip => @phylip_updated,
+        :num_trees => num_parsi_trees,
+        :newick => File.join(@parsimony_trees_dir, parsi_start_tree),
+        :outdir => @parsimony_trees_out_dir,
+        :stderr => File.join(@parsimony_trees_out_dir, "err_#{parsi_start_tree}"),
+        :stdout => File.join(@parsimony_trees_out_dir, "info_#{parsi_start_tree}"),
+        :name => "u#{@update_id}_#{parsi_start_tree}"
+      }
+      parsi =PerpetualTreeMaker::Parsimonator.new(parsimonator_opts)  
+      logput "Start computing parsimony trees of #{parsi_start_tree}, #{i+1} of #{trees.size}"
+      parsi.run
+      logput "run with options #{parsi.ops.to_s}"
+      logput "Done with parsimony trees of #{parsi_start_tree}, #{i+1} of #{trees.size}"
+    end 
+  end
+  def generate_ML_trees(starting_trees_dir, phylip, num_bestML_trees, partition_file)
     starting_trees = Dir.entries(starting_trees_dir).select{|f| f =~ /^RAxML_parsimonyTree/}
     raise "no starting trees available" if starting_trees.nil? or starting_trees.size < 1
     logput "LOCAL: #{starting_trees.size} starting trees to be used"
@@ -353,8 +355,8 @@ class TreeBunchStarter
     iteration_args = [@bestML_bunch, num_bestML_trees, "", @update_id, @ml_trees_dir, @iteration_results_name]
     iteration = PerpetualTreeEvaluation::IterationFinisher.new iteration_args
     iteration_results = PerpetualTreeEvaluation::ProjectResults.new :info_files_dir => iteration.results_dir, 
-                                                                    :best_set => num_bestML_trees,
-                                                                    :expected_set => starting_trees.size
+      :best_set => num_bestML_trees,
+      :expected_set => starting_trees.size
     logput "#{iteration_results.lh_rank.to_s}"
     iteration.add_best_trees(iteration_results.lh_rank)
     iteration.add_finish_label

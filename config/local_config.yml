@@ -1,3 +1,3 @@
 # Default configuration for installation
-bin_dir: testinstall/bin                       # add to $PATH ?
-install_dir: testinstall                       # configured code, templates
+bin_dir: pumper_standalone/bin                       # add to $PATH ?
+install_dir: pumper_standalone                       # configured code, templates

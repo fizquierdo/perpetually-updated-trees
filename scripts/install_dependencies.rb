@@ -19,12 +19,9 @@ else
   log.error "PUmPER requires Ruby >= 1.9.2, please upgrade your installation"
 end
 
-# Minimal gems required for standalone
-#required_gems = %w(rake)
 # Minimal gems required for remote
-# required_gems += %w(net-scp net-ssh erb)
-
 =begin
+required_gems = %w(net-scp net-ssh erb)
 required_gems.each do |name| 
   begin 
     gem name
