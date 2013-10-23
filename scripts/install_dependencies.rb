@@ -12,7 +12,8 @@ if defined?(Gem)
 else
   log.error "RubyGems is not installed. Please install from http://rubygems.org/pages/download"
 end
-if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new('1.9.2')
+#if Gem::Version.new(RUBY_VERSION.to_s) >= Gem::Version.new("1.9.2")
+if RUBY_VERSION.to_f >= 1.9
   log.info "Using Ruby #{RUBY_VERSION} ... OK"
 else
   log.error "PUmPER requires Ruby >= 1.9.2, please upgrade your installation"
@@ -70,7 +71,8 @@ programs = {
 programs.each do |key, program|
   log.info "\nChecking #{key.to_s}..."
   installed = true
-  zipped = 'master.zip'
+  #zipped = 'master.zip'
+  zipped = 'master'
   folder = program[:folder]
   versions = program[:versions]
   versions.each do |key, v|
