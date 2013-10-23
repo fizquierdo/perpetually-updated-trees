@@ -1,5 +1,5 @@
 
-require 'bio'
+#require 'bio'
 require 'rphylip'
 
 module PerpetualTreeUtils
@@ -27,18 +27,37 @@ module PerpetualTreeUtils
   end
 
 
-
-
   # Converter Fasta2Phylip
   class Fasta
     def initialize(filename)
       @seqs = []
       @widths = []
+      curseq = nil
+      curname = nil
       raise "File #{filename} does not exist" unless File.exist? filename
-      ff = Bio::FlatFile.open(Bio::FastaFormat, filename)
-      ff.each_entry do |fa|
-        @seqs << fa.definition + " " + fa.naseq
-        @widths << fa.nalen 
+      #ff = Bio::FlatFile.open(Bio::FastaFormat, filename)
+      #ff.each_entry do |fa|
+      #  @seqs << fa.definition + " " + fa.naseq
+      #  @widths << fa.nalen 
+      #end
+      ff = File.open(filename)
+      ff.each_line do |l|
+        if l =~ />\s*(\S+)/
+          #puts(l)
+          if(curseq != nil)
+            @seqs << curname + " " + curseq;
+            @widths << curseq.length
+          end
+          curname = $1;
+          curseq = ""
+        elsif curname != nil
+          l.gsub!( /\s/, "" )
+          curseq += l
+        end
+      end
+      if(curseq != nil)
+        @seqs << curname + " " + curseq;
+        @widths << curseq.length
       end
     end
     def to_phylip(filename)
@@ -50,7 +69,7 @@ module PerpetualTreeUtils
       end
     end
   end
-  
+
   class FastaAlignmentCollection
     attr_accessor :aln, :part
     def initialize(phlawd_iteration, log)

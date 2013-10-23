@@ -20,16 +20,17 @@ else
 end
 
 # Minimal gems required for standalone
-required_gems = %w(rake trollop floatstats bio)
+#required_gems = %w(rake)
 # Minimal gems required for remote
 # required_gems += %w(net-scp net-ssh erb)
 
+=begin
 required_gems.each do |name| 
   begin 
     gem name
     log.info "Gem #{name} available ... OK"
   rescue Gem::LoadError
-    cmd = "gem install --no-rdoc --no-ri #{name}"
+    cmd = "gem install --no-rdoc --no-ri -i gems #{name} "
     log.info "Gem #{name} is not installed ... Installing now..."
     log.info "Running: " + cmd
     log.error "Failed to install #{name}" unless system cmd
@@ -37,6 +38,7 @@ required_gems.each do |name|
   end
 end
 log.info "All Ruby dependencies... OK\n"
+=end
 
 # check wget, unzip exists
 %w(wget unzip gcc).each do |tool|
@@ -97,6 +99,7 @@ programs.each do |key, program|
       end
     end
     log.exec "rm #{zipped}", "cleanup"
+    log.exec "rm #{zipped}.zip", "cleanup"
     log.exec "rm -rf #{folder}", "cleanup"
   end
 end

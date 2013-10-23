@@ -10,8 +10,8 @@ require 'rphylip'
 require 'perpetual_evaluation'
 # gems
 require 'logger'   
-require 'net/ssh'
-require 'net/scp'
+#require 'net/ssh'
+#require 'net/scp'
 #
 #require 'pp'
 

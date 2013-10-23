@@ -7,17 +7,21 @@
 # No guarantees given
 
 
-echo -n "Testing curl ... "
-if ! command -v curl > /dev/null 2>&1; then
-   echo "ERROR: curl not found"
-   exit
-fi
-echo "OK"
 
+# Install a ruby version manager (rvm) 
 echo -n "Testing rvm ... "
 if ! command -v rvm > /dev/null 2>&1; then
+  echo -n "Testing curl ... "
+  if ! command -v curl > /dev/null 2>&1; then
+     echo "ERROR: curl not found"
+     exit
+  fi
+  echo "OK"
   \curl -L https://get.rvm.io | bash
 fi
 echo "OK"
 
 rvm reload
+
+# Use rvm to install locally  Ruby version 1.9.3
+command rvm install 1.9.3
