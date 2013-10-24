@@ -32,8 +32,8 @@ end
 desc "Install the standalone version" 
 task :install_standalone do
   # Configuration
-  install_dir = File.expand_path opts['install_dir']
-  bin_dir     = File.expand_path opts['bin_dir'] 
+  install_dir = File.expand_path opts['standalone_install_dir']
+  bin_dir     = File.expand_path opts['standalone_bin_dir'] 
   scriptdir   = File.join install_dir, "scripts"
   libdir      = File.join install_dir, "lib"
   [bin_dir, install_dir, libdir, scriptdir].each{|dir| sysmkdir dir}
@@ -133,6 +133,8 @@ task :tutorial, :parsi, :best do |t, args|
   end
 end
 
+=begin
+# Adapt to test PHLAWD + remote installation
 desc "Run generator to create demo pipeline and link small pln.db"
 task :pipeline do
   wdir = "zpipeline_from_rake_" + Time.now.to_i.to_s
@@ -142,4 +144,5 @@ task :pipeline do
     system "ln ../testinstall/perpetualinstall/data/pln.db alignments/GenBank/pln.db"
   end
 end
+=end
 
