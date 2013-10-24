@@ -3,10 +3,8 @@
 require 'fileutils'
 
 # This script automatically generates default config files to setup fast a perpetual project
-pumper_version = "PUMPER_VERSION"
-
 class ProjectData
-  attr_reader :name, :remote_config_file_name, :install_path
+  attr_reader :name, :remote_config_file_name, :install_path, :pumper_version
   def initialize(name, best_bunch_size, parsimony_starting_size, initial_phylip = nil)
     @install_path="/opt/perpetualtree" # will be overwritten by Rakefile
     @name = name
@@ -19,6 +17,7 @@ class ProjectData
     # phlawd specific
     @phlawd_binary = "PHLAWD"
     @phlawd_autoupdate_info = "update_info"
+    @pumper_version = "PUMPER_VERSION" # will be overwritten by Rakefile
   end
   def check_input
     # Make sure the initial phylip is there
@@ -61,7 +60,7 @@ END_STARTER
   end
 
   def config_content
-configfile = <<END_CONFIGFILE
+configfile_header = <<END_CONFIGFILE_HEADER
 run_name: #{@name}
 parsimony_starting_size: #{@parsimony_starting_size}
 best_bunch_size: #{@best_bunch_size}
@@ -72,7 +71,6 @@ updates_log: #{File.join project_dir, 'updates.log'}
 # All the output will be written here (do not change)
 experiments_file: #{File.expand_path 'experiments.yml'}
 experiments_folder: #{experiments_dir}
-remote_config_file: #{File.expand_path @remote_config_file_name}
 
 # Generated alignments should be here
 #{phlawd_configuration}
@@ -84,7 +82,16 @@ put: /usr/bin/PUT
 best_ml_folder_name: best_ml_trees
 best_ml_bunch_name: #{@best_bunch_name}
 iteration_results_name: #{@iteration_results_name}
-END_CONFIGFILE
+END_CONFIGFILE_HEADER
+
+configfile_tail = <<END_CONFIGFILE_TAIL
+# Remote version
+remote_config_file: #{File.expand_path @remote_config_file_name}
+END_CONFIGFILE_TAIL
+
+configfile = congfigfile_header
+configfile += configfile_tail if @pumper_version == 'remote'
+configfile 
   end
 
   def cron_content
@@ -193,7 +200,7 @@ end
 FileUtils.copy "#{p.install_path}/scripts/summarize_results.rb", Dir.pwd
 
 # Copy a default remote config script(required if we call this with remote)
-if pumper_version == 'remote'
+if p.pumper_version == 'remote'
   if not File.exist?(p.remote_config_file_name)
     remote_config_file = "#{p.install_path}/templates/#{p.remote_config_file_name}"
     if File.exist? remote_config_file
