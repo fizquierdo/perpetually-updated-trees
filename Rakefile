@@ -43,7 +43,7 @@ def generate_tutorial(pumper_bin_dir, wdir, args_best, args_parsi)
   end
 end
 
-def generate_tutorial(pumper_bin_dir, wdir)
+def generate_pipeline(pumper_bin_dir, wdir)
   # Assume pln.db is available (can be downloaded from phlawd.net)
   FileUtils.mkdir wdir
   Dir.chdir(wdir) do 
@@ -165,10 +165,10 @@ end
 desc "Create remote demo pipeline and link small pln.db"
 task :pipeline_remote do
   wdir = "znewpipeline_remote_from_rake_" + timestr
-  generate_tutorial pumper_remote_bin_dir, wdir
+  generate_pipeline pumper_remote_bin_dir, wdir
 end
 desc "Create standalone demo pipeline and link small pln.db"
 task :pipeline_standalone do
   wdir = "znewpipeline_remote_from_rake_" + timestr
-  generate_tutorial pumper_standalone_bin_dir, wdir
+  generate_pipeline pumper_standalone_bin_dir, wdir
 end
