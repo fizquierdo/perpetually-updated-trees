@@ -10,7 +10,7 @@ require 'rphylip'
 # PUmPER usage exaple using PHLAWD 
 
 # Config
-raise "Usage #{$0} standalone.yml" unless ARGV.size == 1
+raise "Usage #{$0} pumper_config_yourname.yml" unless ARGV.size == 1
 config_file = ARGV.first
 opts = PerpetualTreeConfiguration::Configurator.new(config_file).conf
 

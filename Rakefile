@@ -29,6 +29,31 @@ def generate_executable(basefile, execfile, bin_dir,  repl)
   FileUtils.rm execfile
 end
 
+def generate_tutorial(pumper_bin_dir, wdir, args_best, args_parsi)
+  # from the testdata
+  init_phy = "../testdata/lonicera_10taxa.rbcL.phy"
+  update_args = "--name loni --update-phy ../testdata/lonicera_23taxa.rbcL.phy --parsi-size 2 --bunch-size 1 --config-file standalone_loni.yml"
+  FileUtils.mkdir wdir
+  Dir.chdir(wdir) do 
+    # Generate the initial iteration script with the PUmPER generator
+    system "#{pumper_bin_dir}/PUMPER_GENERATE loni #{args_best} #{args_parsi} #{init_phy}"
+    # Generate the update iteration script directly calling PUmPER 
+    update_cmd = "#{pumper_bin_dir}/PUMPER #{update_args}"
+    system "echo #{update_cmd} > update_loni.sh"
+  end
+end
+
+def generate_tutorial(pumper_bin_dir, wdir)
+  # Assume pln.db is available (can be downloaded from phlawd.net)
+  FileUtils.mkdir wdir
+  Dir.chdir(wdir) do 
+    system "#{pumper_bin_dir}/PUMPER_GENERATE pipeline"
+    system "ln ../pln.db alignments/GenBank/pln.db"
+  end
+end
+
+
+# TASKS
 desc "Install the standalone version" 
 task :install_standalone do
   # Configuration
@@ -120,37 +145,30 @@ end
 
 pumper_standalone_bin_dir = File.expand_path opts['standalone_bin_dir'] 
 pumper_remote_bin_dir     = File.expand_path opts['remote_bin_dir'] 
+timestr = Time.now.to_i.to_s
 
-desc "Run generator for the gettin-started tutorial"
-task :tutorial, :parsi, :best do |t, args|
-  wdir = "ztutorial_from_rake_" + Time.now.to_i.to_s
+# Tutorial examples (using PUmPER without PHLAWD)
+desc "Run generator for the getting-started tutorial (standalone)"
+task :tutorial_standalone, :parsi, :best do |t, args|
+  wdir = "ztutorial_standalone_from_rake_" + timestr
   args.with_defaults(:parsi => 3, :best => 1)
-  FileUtils.mkdir wdir
-  Dir.chdir(wdir) do 
-    # Generate the initial iteration script with the PUmPER generator
-    system "#{pumper_standalone_bin_dir}/PUMPER_GENERATE loni #{args[:best]} #{args[:parsi]} ../testdata/lonicera_10taxa.rbcL.phy"
-    # Generate the update iteration script directly calling PUmPER 
-    update_cmd = "#{pumper_standalone_bin_dir}/PUMPER --name loni --update-phy ../testdata/lonicera_23taxa.rbcL.phy --parsi-size 2 --bunch-size 1 --config-file standalone_loni.yml"
-    system "echo #{update_cmd} > update_loni.sh"
-  end
+  generate_tutorial pumper_standalone_bin_dir, wdir, args[:best], args[:parsi]
+end
+desc "Run generator for the getting-started tutorial (remote)"
+task :tutorial_remote, :parsi, :best do |t, args|
+  wdir = "ztutorial_remote_from_rake_" + timestr
+  args.with_defaults(:parsi => 3, :best => 1)
+  generate_tutorial pumper_remote_bin_dir, wdir, args[:best], args[:parsi]
 end
 
 # Adapt to test PHLAWD + remote installation
-desc "Run generator to create remote demo pipeline and link small pln.db"
+desc "Create remote demo pipeline and link small pln.db"
 task :pipeline_remote do
-  wdir = "znewpipeline_from_rake_" + Time.now.to_i.to_s
-  FileUtils.mkdir wdir
-  Dir.chdir(wdir) do 
-    system "#{pumper_remote_bin_dir}/PUMPER_GENERATE pipeline"
-    system "ln ../pln.db alignments/GenBank/pln.db"
-  end
+  wdir = "znewpipeline_remote_from_rake_" + timestr
+  generate_tutorial pumper_remote_bin_dir, wdir
 end
-desc "Run generator to create standalone demo pipeline and link small pln.db"
+desc "Create standalone demo pipeline and link small pln.db"
 task :pipeline_standalone do
-  wdir = "znewpipeline_from_rake_" + Time.now.to_i.to_s
-  FileUtils.mkdir wdir
-  Dir.chdir(wdir) do 
-    system "#{pumper_standalone_bin_dir}/PUMPER_GENERATE pipeline"
-    system "ln ../pln.db alignments/GenBank/pln.db"
-  end
+  wdir = "znewpipeline_remote_from_rake_" + timestr
+  generate_tutorial pumper_standalone_bin_dir, wdir
 end
