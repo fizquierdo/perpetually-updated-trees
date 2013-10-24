@@ -89,7 +89,7 @@ configfile_tail = <<END_CONFIGFILE_TAIL
 remote_config_file: #{File.expand_path @remote_config_file_name}
 END_CONFIGFILE_TAIL
 
-configfile = congfigfile_header
+configfile  = configfile_header
 configfile += configfile_tail if @pumper_version == 'remote'
 configfile 
   end
