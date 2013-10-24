@@ -7,6 +7,7 @@ log = InstallLogger.new("pumper_dependencies.log")
 
 log.info "Checking Ruby dependencies..."
 # Assume a typicaly ruby installation is available (ruby 1.9.2 + gem) available
+=begin
 if defined?(Gem)
   log.info "RubyGems available ... OK"
 else
@@ -18,6 +19,7 @@ if RUBY_VERSION.to_f >= 1.9
 else
   log.error "PUmPER requires Ruby >= 1.9.2, please upgrade your installation"
 end
+=end
 
 # Minimal gems required for remote
 =begin
@@ -109,7 +111,9 @@ pumper_bin_dir     = File.expand_path opts['bin_dir']
 
 log.info "\nInstalling PUmPER in #{pumper_install_dir}"
 log.exec "rake install_standalone", "PUmPER_installation"
-%w(PUMPER  PUMPER_FINISH  PUMPER_GENERATE).each do |pumper|
+#executables = %w(PUMPER  PUMPER_FINISH  PUMPER_GENERATE)
+executables = %w(PUMPER  PUMPER_GENERATE)
+executables.each do |pumper|
   if File.exist? File.join pumper_bin_dir, pumper
     log.info "#{pumper} is ready at #{pumper_bin_dir}"
   else
