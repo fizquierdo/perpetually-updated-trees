@@ -101,13 +101,13 @@ end
 
 # Minimal gems required for remote
 def install_gems_remote(log)
-  required_gems = %w(net-scp net-ssh erb)
+  required_gems = %w(net-scp net-ssh)
   required_gems.each do |name| 
     begin 
       gem name
       log.info "Gem #{name} available ... OK"
     rescue #Gem::LoadError
-      cmd = "gem install --no-rdoc --no-ri -i gems #{name} "
+      cmd = "gem install --no-rdoc --no-ri #{name} "
       log.info "Gem #{name} is not installed ... Installing now..."
       log.info "Running: " + cmd
       log.error "Failed to install #{name}" unless system cmd
