@@ -108,7 +108,7 @@ if not opts[:initial_phy].empty?
                   :exp_name => opts[:name]}
 
   if version == 'remote'
-    starter_opts[:remote_config_file] = cnf[:remote_config_file] 
+    starter_opts[:remote_config_file] = cnf['remote_config_file'] 
   end
 
   starter = TreeBunchStarter.new starter_opts

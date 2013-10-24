@@ -6,7 +6,7 @@ require 'net/scp'
 require_relative '../lib/configuration'
 
 # User should edit this file after install
-config_file = "testinstall/perpetualinstall/templates/remote_config.yml"
+config_file = "pumper_remote/templates/remote_config.yml"
 
 describe "remote connection" do
   before(:all) do
