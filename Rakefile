@@ -133,16 +133,13 @@ task :tutorial, :parsi, :best do |t, args|
   end
 end
 
-=begin
 # Adapt to test PHLAWD + remote installation
 desc "Run generator to create demo pipeline and link small pln.db"
 task :pipeline do
-  wdir = "zpipeline_from_rake_" + Time.now.to_i.to_s
+  wdir = "znewpipeline_from_rake_" + Time.now.to_i.to_s
   FileUtils.mkdir wdir
   Dir.chdir(wdir) do 
-    system "../testinstall/bin/PUMPER_GENERATE pipeline"
-    system "ln ../testinstall/perpetualinstall/data/pln.db alignments/GenBank/pln.db"
+    system "../pumper_remote/bin/PUMPER_GENERATE pipeline"
+    system "ln ../pln.db alignments/GenBank/pln.db"
   end
 end
-=end
-
