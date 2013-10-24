@@ -118,8 +118,8 @@ task :conf do
   end
 end
 
-pumper_standalone_bin_dir     = File.expand_path opts['standalone_bin_dir'] 
-#pumper_install_dir = File.expand_path opts['standalone_install_dir']
+pumper_standalone_bin_dir = File.expand_path opts['standalone_bin_dir'] 
+pumper_remote_bin_dir     = File.expand_path opts['remote_bin_dir'] 
 
 desc "Run generator for the gettin-started tutorial"
 task :tutorial, :parsi, :best do |t, args|
@@ -136,12 +136,21 @@ task :tutorial, :parsi, :best do |t, args|
 end
 
 # Adapt to test PHLAWD + remote installation
-desc "Run generator to create demo pipeline and link small pln.db"
-task :pipeline do
+desc "Run generator to create remote demo pipeline and link small pln.db"
+task :pipeline_remote do
   wdir = "znewpipeline_from_rake_" + Time.now.to_i.to_s
   FileUtils.mkdir wdir
   Dir.chdir(wdir) do 
-    system "../pumper_remote/bin/PUMPER_GENERATE pipeline"
+    system "#{pumper_remote_bin_dir}/PUMPER_GENERATE pipeline"
+    system "ln ../pln.db alignments/GenBank/pln.db"
+  end
+end
+desc "Run generator to create standalone demo pipeline and link small pln.db"
+task :pipeline_standalone do
+  wdir = "znewpipeline_from_rake_" + Time.now.to_i.to_s
+  FileUtils.mkdir wdir
+  Dir.chdir(wdir) do 
+    system "#{pumper_standalone_bin_dir}/PUMPER_GENERATE pipeline"
     system "ln ../pln.db alignments/GenBank/pln.db"
   end
 end
