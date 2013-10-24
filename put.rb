@@ -4,8 +4,14 @@ $LOAD_PATH.unshift File.expand_path("lib")
 
 require 'trollop'
 require 'fileutils'
-require 'starter'    
 require 'experiment'    
+
+version = 'standalone'
+if version == 'standalone'
+  require 'starter'    
+else
+  require 'starter_remote'    
+end
 
 #  Perpetually updated tree from the command line
 # :num_parsi_trees : defaults to 3, will the the #of parsimony trees -N by parsimonator
@@ -26,12 +32,16 @@ opts = Trollop::options do
   opt :parsi_size, "Number of new parsimony trees", :default => DEFAULT_NUM_NEW_PARSI_TREES
   opt :bunch_size, "Number of best ML trees at the end of iteration ", :default => DEFAULT_NUM_BEST_ML_TREES
 
-  opt :remote, "Use cluster resources on remote machine", :default => false
-
+  #opt :remote, "Use cluster resources on remote machine", :default => false
   opt :num_threads, "number of threads", :default => ""
+  opt :config_file, "Paths and configuration for the run", :default => "standalone.yml" 
+
+if version == 'standalone'
   opt :search_std, "Conduct a standard RAxML search on given initial alignment", :default => false 
-  opt :remote_config_file, "Paths and configuration for remote cluster", :default => "remote_config.yml" 
-  opt :standalone_config_file, "Paths and configuration", :default => "standalone.yml" 
+end
+#else
+#  opt :remote_config_file, "Paths and configuration for remote cluster", :default => "remote_config.yml" 
+#end
 
   puts
   puts "Perpetually updated Tree. Summery of cycles: "
@@ -41,6 +51,7 @@ opts = Trollop::options do
   puts
 
 end
+
 
 def find_iteration_id_and_last_dir(exp_name)
   e = ExperimentTable::Experiment.new(exp_name, File.expand_path(Dir.pwd))
@@ -85,19 +96,22 @@ if not opts[:initial_phy].empty?
   puts "starting a tree bunch"
   e = ExperimentTable::Experiment.new(opts[:name], File.expand_path(Dir.pwd))
   base_dir = File.join(e.dirname("output"), "bunch_0")
-  cnf = YAML.load(File.read opts[:standalone_config_file])
+  cnf = YAML.load(File.read opts[:config_file])
   puts "starting a tree bunch #{base_dir}"
-  starter = TreeBunchStarter.new(:phylip => opts[:initial_phy], 
-                                 :partition_file => opts[:partitions],
-                                 :num_threads => opts[:num_threads],
-                                 :remote => opts[:remote],
-                                 :remote_config_file => opts[:remote_config_file],
-                                 :iteration_results_name => cnf['iteration_results_name'],
-                                 :best_ml_folder_name => cnf['best_ml_folder_name'],
-                                 :best_ml_bunch_name => cnf['best_ml_bunch_name'],
-                                 :base_dir => base_dir,
-                                 :exp_name => opts[:name]
-                                )
+  starter_opts = {:phylip => opts[:initial_phy], 
+                  :partition_file => opts[:partitions],
+                  :num_threads => opts[:num_threads],
+                  :iteration_results_name => cnf['iteration_results_name'],
+                  :best_ml_folder_name => cnf['best_ml_folder_name'],
+                  :best_ml_bunch_name => cnf['best_ml_bunch_name'],
+                  :base_dir => base_dir,
+                  :exp_name => opts[:name]}
+
+  if version == 'remote'
+    starter_opts[:remote_config_file] = cnf[:remote_config_file] 
+  end
+
+  starter = TreeBunchStarter.new starter_opts
   if starter.ready? 
     if list.add(opts)
       if opts[:search_std]
@@ -133,12 +147,11 @@ if not opts[:update_phy].empty?
     puts "Starting update #{next_id}"
     list.update(opts[:name], "u#{next_id.to_s}", "start at #{Time.now}")
     update_dir = File.join e.dirname("output"), "bunch_#{next_id.to_s}"
-    cnf = YAML.load(File.read opts[:standalone_config_file])
+    cnf = YAML.load(File.read opts[:config_file])
     updater = TreeBunchStarter.new(:phylip => opts[:update_phy], 
                                    :partition_file => opts[:partitions],
                                    :prev_dir => last_dir,
                                    :base_dir => update_dir, 
-                                   :remote => opts[:remote],
                                    :update_id => next_id.to_i,
                                    :iteration_results_name => cnf['iteration_results_name'],
                                    :best_ml_folder_name => cnf['best_ml_folder_name'],

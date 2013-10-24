@@ -76,7 +76,7 @@ task :install_remote do
   raise "#{bin_dir} not found" unless File.exist? bin_dir
 
   repl = [{:base => /LOAD_PATH\.unshift.+$/, :repl => %{LOAD_PATH.unshift "#{install_dir}/lib"}},
-          {:base => /require \'starter\'/, :repl => %{require \'starter_remote\'}}]
+          {:base => /version = \'standalone\'/, :repl => %{version = \'remote\'}}]
   # main script
   generate_executable("put.rb", "PUMPER", bin_dir, repl)
   # script for finalizing iterations 
@@ -116,8 +116,8 @@ task :conf do
   end
 end
 
-pumper_bin_dir     = File.expand_path opts['bin_dir'] 
-pumper_install_dir = File.expand_path opts['install_dir']
+pumper_standalone_bin_dir     = File.expand_path opts['standalone_bin_dir'] 
+#pumper_install_dir = File.expand_path opts['standalone_install_dir']
 
 desc "Run generator for the gettin-started tutorial"
 task :tutorial, :parsi, :best do |t, args|
@@ -126,9 +126,9 @@ task :tutorial, :parsi, :best do |t, args|
   FileUtils.mkdir wdir
   Dir.chdir(wdir) do 
     # Generate the initial iteration script with the PUmPER generator
-    system "#{pumper_bin_dir}/PUMPER_GENERATE loni #{args[:best]} #{args[:parsi]} ../testdata/lonicera_10taxa.rbcL.phy"
+    system "#{pumper_standalone_bin_dir}/PUMPER_GENERATE loni #{args[:best]} #{args[:parsi]} ../testdata/lonicera_10taxa.rbcL.phy"
     # Generate the update iteration script directly calling PUmPER 
-    update_cmd = "#{pumper_bin_dir}/PUMPER --name loni --update-phy ../testdata/lonicera_23taxa.rbcL.phy --parsi-size 2 --bunch-size 1 --standalone-config-file standalone_loni.yml"
+    update_cmd = "#{pumper_standalone_bin_dir}/PUMPER --name loni --update-phy ../testdata/lonicera_23taxa.rbcL.phy --parsi-size 2 --bunch-size 1 --config-file standalone_loni.yml"
     system "echo #{update_cmd} > update_loni.sh"
   end
 end

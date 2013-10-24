@@ -61,10 +61,8 @@ BUNCH=#{@best_bunch_size}
 CONF=#{standalone_config_name}
 
 # Execute standalone
-PUMPER_PATH --name #{@name} --initial-phy $INITIAL_PHY --parsi-size $PARSI --bunch-size $BUNCH --standalone-config-file $CONF 
+PUMPER_PATH --name #{@name} --initial-phy $INITIAL_PHY --parsi-size $PARSI --bunch-size $BUNCH --config-file $CONF 
 
-# Execute remotely with --remote
-# Configure remote.config.yml
 END_STARTER
   end
 
@@ -206,9 +204,7 @@ if not File.exist?(p.remote_config_file_name)
   if File.exist? remote_config_file
     FileUtils.copy remote_config_file, Dir.pwd
   else
-    puts "Using Standalone mode  (remote: false in standalone.yml file)"
-    #puts "Please write the remote_config file or do not use remote mode (remote: false) in the standalone*.yml file"
-    #puts "WARNING: #{remote_config_file} not found"
+    puts "Using Standalone mode"
   end
 end
 

@@ -29,7 +29,8 @@ class TreeBunchStarter
     @ml_trees_dir = File.join @base_dir, "ml_trees"
     # the new phylip
     @phylip_updated = File.join @alignment_dir, "phy_#{@update_id.to_s}"
-    # defaults , do we want defaults here?
+
+    # defaults, in general will be overriden when calling start_iteration
     @num_parsi_trees = 4 
     @num_bestML_trees = @num_parsi_trees / 2 
     #  
@@ -38,15 +39,11 @@ class TreeBunchStarter
     @CAT_topology_bunch = File.join @ml_trees_dir, "CAT_topology_bunch.nw"
     @CAT_topology_bunch_order = File.join @ml_trees_dir, "CAT_topology_bunch_order.txt"
 
-    # TODO all these are just options for CycleController, would be better to do opts mass assignment
     @iteration_results_name = opts[:iteration_results_name]
-
     @bestML_trees_dir = File.join @base_dir, opts[:best_ml_folder_name]
     @bestML_bunch = File.join @bestML_trees_dir, opts[:best_ml_bunch_name]
     @prev_bestML_bunch = File.join @prev_dir, opts[:best_ml_folder_name], opts[:best_ml_bunch_name] unless @prev_dir.nil?
-    # cluster 
-    @remote = opts[:remote] 
-    @remote_config_file = opts[:remote_config_file] 
+
     # logging locally
     @logpath = File.join @base_dir, "cycle.log"
   end
@@ -105,23 +102,19 @@ class TreeBunchStarter
       if num_bestML_trees > num_iteration_trees 
         raise "#bestML trees (#{num_bestML_trees}) cant be higher than iteration number of trees #{num_iteration_trees}"
       end
-      if @remote
-        raise "Standalone mode expected"
+      logput "****** Start iteration no #{@update_id} ********"
+      logput "step 1 of 2 : Parsimony starting trees #{num_parsi_trees} each\n----"
+      if opts[:initial_iteration]
+        generate_parsimony_trees(num_parsi_trees)
+        parsimony_trees_dir = @parsimony_trees_dir
       else
-        logput "****** Start iteration no #{@update_id} ********"
-        logput "step 1 of 2 : Parsimony starting trees #{num_parsi_trees} each\n----"
-        if opts[:initial_iteration]
-          generate_parsimony_trees(num_parsi_trees)
-          parsimony_trees_dir = @parsimony_trees_dir
-        else
-          update_parsimony_trees(num_parsi_trees, prev_trees)
-          parsimony_trees_dir = @parsimony_trees_out_dir
-        end
-        logput "step 2 of 2 : ML trees\n----"
-        best_lh = generate_ML_trees(parsimony_trees_dir, phylip_dataset, num_bestML_trees, @partition_file)
-        logput "Bunch of initial ML trees #{num_bestML_trees}, ready at #{@bestML_bunch}\n----"
-        best_lh
+        update_parsimony_trees(num_parsi_trees, prev_trees)
+        parsimony_trees_dir = @parsimony_trees_out_dir
       end
+      logput "step 2 of 2 : ML trees\n----"
+      best_lh = generate_ML_trees(parsimony_trees_dir, phylip_dataset, num_bestML_trees, @partition_file)
+      logput "Bunch of initial ML trees #{num_bestML_trees}, ready at #{@bestML_bunch}\n----"
+      best_lh
     rescue Exception => e
       logput(e, error = true)
       raise e

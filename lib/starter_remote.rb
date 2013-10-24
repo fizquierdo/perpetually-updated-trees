@@ -2,7 +2,6 @@
 
 # code import
 require 'remote_job'
-require 'rraxml'
 require 'rnewick'
 require 'rphylip'
 require 'perpetual_evaluation'
@@ -135,7 +134,6 @@ class TreeBunchStarter
     @bestML_bunch = File.join @bestML_trees_dir, opts[:best_ml_bunch_name]
     @prev_bestML_bunch = File.join @prev_dir, opts[:best_ml_folder_name], opts[:best_ml_bunch_name] unless @prev_dir.nil?
     # cluster 
-    @remote = opts[:remote] 
     @remote_config_file = opts[:remote_config_file] 
     # logging locally
     @logpath = File.join @base_dir, "cycle.log"
@@ -195,52 +193,30 @@ class TreeBunchStarter
       if num_bestML_trees > num_iteration_trees 
         raise "#bestML trees (#{num_bestML_trees}) cant be higher than iteration number of trees #{num_iteration_trees}"
       end
-      if @remote
-        logput "Exp #{opts[:exp_name]}, your cluster will take care of this iteration no #{@update_id}"
-        c = CycleController.new(:update_id => @update_id, 
-                                :phy => phylip_dataset, 
-                                :partition_file => @partition_file, 
-                                :num_parsi_trees => num_parsi_trees, 
-                                :num_ptrees => num_iteration_trees, 
-                                :prev_trees_paths => prev_trees_paths, 
-                                :num_bestML_trees => num_bestML_trees,
-                                :base_dir => @base_dir,
-                                :remote_config_file => @remote_config_file,
-                                :logpath => @logpath,
-                                :local_parsimony_dir => @parsimony_trees_dir, 
-                                :local_ml_dir => @ml_trees_dir, 
-                                :bestML_bunch => @bestML_bunch, 
-                                :iteration_results_name => @iteration_results_name, 
-                                :exp_name => opts[:exp_name]
-                               )
+      logput "Exp #{opts[:exp_name]}, your cluster will take care of this iteration no #{@update_id}"
+      c = CycleController.new(:update_id => @update_id, 
+                              :phy => phylip_dataset, 
+                              :partition_file => @partition_file, 
+                              :num_parsi_trees => num_parsi_trees, 
+                              :num_ptrees => num_iteration_trees, 
+                              :prev_trees_paths => prev_trees_paths, 
+                              :num_bestML_trees => num_bestML_trees,
+                              :base_dir => @base_dir,
+                              :remote_config_file => @remote_config_file,
+                              :logpath => @logpath,
+                              :local_parsimony_dir => @parsimony_trees_dir, 
+                              :local_ml_dir => @ml_trees_dir, 
+                              :bestML_bunch => @bestML_bunch, 
+                              :iteration_results_name => @iteration_results_name, 
+                              :exp_name => opts[:exp_name]
+                             )
 
-                               c.run_as_batch_remote # send prev_trees to remote machine!
-                               "cluster"
-      else
-        raise "remote mode expected"
-      end
+      c.run_as_batch_remote # send prev_trees to remote machine!
+      "cluster"
     rescue Exception => e
       logput(e, error = true)
       raise e
     end
-  end
-  def search_std(num_gamma_trees = nil)
-    search_opts = {
-      :phylip => @phylip,
-      :partition_file => @partition_file,
-      :outdir => @ml_trees_dir,
-      :num_gamma_trees => num_gamma_trees || 1, 
-      :stderr => File.join(@ml_trees_dir, "err"),
-      :stdout => File.join(@ml_trees_dir, "info"),
-      :name => "std_GAMMA_search" 
-    }
-    search_opts.merge!({:num_threads => @num_threads}) if @num_threads.to_i > 0
-    r = RaxmlGammaSearch.new(search_opts)
-    logput "Start ML search from scratch with #{num_gamma_trees} trees"
-    r.run
-    bestLH = File.open(r.stdout).readlines.find{|l| l =~ /^Final GAMMA-based Score of best/}.chomp.split("tree").last
-    logput "Done ML search from scratch with #{num_gamma_trees} trees"
-    bestLH
   end
   private
   def check_options(opts)
