@@ -7,12 +7,12 @@ require 'perpetual_utils'
 require 'phlawd'
 require 'rphylip'
 
+# PUmPER usage exaple using PHLAWD 
 
 # Config
 raise "Usage #{$0} standalone.yml" unless ARGV.size == 1
 config_file = ARGV.first
 opts = PerpetualTreeConfiguration::Configurator.new(config_file).conf
-remote = opts['remote'] || false
 
 # Log everything here
 log_filename = opts['example_log_file_name'] || "perpetual.log"
@@ -45,11 +45,9 @@ part = phlawd_fastas.part
 
 raise "Alignment not available" unless aln and File.exist? aln
 
-
 # Run iteration 1 of Raxml searches
 log.info "### SEARCH ITERATION 1 [INITIAL] ###"
 log.info "Using #{opts['put']}"
-cmd = "#{opts['put']} --name #{opts['run_name']} --initial-phy #{aln} --partitions #{part} --parsi-size #{opts['parsimony_starting_size']} --bunch-size #{opts['best_bunch_size']} --standalone-config-file #{config_file}"
-cmd += " --remote" if remote
+cmd = "#{opts['put']} --name #{opts['run_name']} --initial-phy #{aln} --partitions #{part} --parsi-size #{opts['parsimony_starting_size']} --bunch-size #{opts['best_bunch_size']} --config-file #{config_file}"
 log.systemlog cmd
 log.info("First iteration launched")

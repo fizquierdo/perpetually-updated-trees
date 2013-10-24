@@ -59,6 +59,7 @@ task :install_standalone do
   # script for generation 
   repl = [{:base => /@install_path=.+$/, :repl => %{@install_path="#{install_dir}"}},
           {:base => /^put:.+$/,          :repl => %{put: #{bin_dir}/PUMPER}},
+          {:base => "PUMPER_VERSION",    :repl => 'standalone'},
           {:base => "PUMPER_PATH",      :repl => "#{bin_dir}/PUMPER"}]
   generate_executable("scripts/generate_perpetual.rb", "PUMPER_GENERATE", bin_dir, repl)
 end
@@ -105,7 +106,8 @@ task :install_remote do
   # script for generation 
   repl = [{:base => /@install_path=.+$/, :repl => %{@install_path="#{install_dir}"}},
           {:base => /^put:.+$/,          :repl => %{put: #{bin_dir}/PUMPER}},
-          {:base => "PUMPER_PATH",      :repl => "#{bin_dir}/PUMPER"}]
+          {:base => "PUMPER_VERSION",    :repl => 'remote'},
+          {:base => "PUMPER_PATH",       :repl => "#{bin_dir}/PUMPER"}]
   generate_executable("scripts/generate_perpetual.rb", "PUMPER_GENERATE", bin_dir, repl)
 end
 

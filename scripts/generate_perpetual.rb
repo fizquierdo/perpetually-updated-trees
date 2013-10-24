@@ -3,16 +3,12 @@
 require 'fileutils'
 
 # This script automatically generates default config files to setup fast a perpetual project
-
-# Assumes:
-#   the working dir should be the current directory
-#   phlawd working dir is the one containing the initial phylip (updates expected there)
-
+pumper_version = "PUMPER_VERSION"
 
 class ProjectData
   attr_reader :name, :remote_config_file_name, :install_path
   def initialize(name, best_bunch_size, parsimony_starting_size, initial_phylip = nil)
-    @install_path="/opt/perpetualtree" # defined in the local config file
+    @install_path="/opt/perpetualtree" # will be overwritten by Rakefile
     @name = name
     @best_bunch_size = best_bunch_size.to_i
     @parsimony_starting_size = parsimony_starting_size.to_i
@@ -31,11 +27,11 @@ class ProjectData
       raise "Initial file does not start with project name #{@name}" unless File.basename(@initial_phylip).include?(@name)
 end
     if @best_bunch_size > @parsimony_starting_size
-      raise  ArgumentError, "Collection size #{@best_bunch_size} must be smaller or equal than parsimony startinng size #{@parsimony_starting_size}"
+      raise  ArgumentError, "Collection size #{@best_bunch_size} must be smaller or equal than parsimony starting size #{@parsimony_starting_size}"
     end
   end
-  def print_standalone_config
-    print_file(standalone_config_name, standalone_config_content)
+  def print_config
+    print_file(config_name, config_content)
   end
   def print_cron_job
     print_file("cron_#{@name}.rb", cron_content)
@@ -45,8 +41,8 @@ end
   end
 
   private
-  def standalone_config_name
-    "standalone_#{@name}.yml"
+  def config_name
+    "pumper_config_#{@name}.yml"
   end
   def print_file(filename, content)
     File.open(filename, "w"){ |f| f.puts content}
@@ -58,16 +54,14 @@ starter_shell_script = <<END_STARTER
 INITIAL_PHY=#{File.expand_path @initial_phylip}
 PARSI=#{@parsimony_starting_size}
 BUNCH=#{@best_bunch_size}
-CONF=#{standalone_config_name}
+CONF=#{config_name}
 
-# Execute standalone
 PUMPER_PATH --name #{@name} --initial-phy $INITIAL_PHY --parsi-size $PARSI --bunch-size $BUNCH --config-file $CONF 
-
 END_STARTER
   end
 
-  def standalone_config_content
-standalone_config = <<END_STANDALONE
+  def config_content
+configfile = <<END_CONFIGFILE
 run_name: #{@name}
 parsimony_starting_size: #{@parsimony_starting_size}
 best_bunch_size: #{@best_bunch_size}
@@ -79,8 +73,6 @@ updates_log: #{File.join project_dir, 'updates.log'}
 experiments_file: #{File.expand_path 'experiments.yml'}
 experiments_folder: #{experiments_dir}
 remote_config_file: #{File.expand_path @remote_config_file_name}
-# Uncomment to true if the remote configuration should be used for the searches
-# remote: true 
 
 # Generated alignments should be here
 #{phlawd_configuration}
@@ -92,7 +84,7 @@ put: /usr/bin/PUT
 best_ml_folder_name: best_ml_trees
 best_ml_bunch_name: #{@best_bunch_name}
 iteration_results_name: #{@iteration_results_name}
-END_STANDALONE
+END_CONFIGFILE
   end
 
   def cron_content
@@ -104,7 +96,7 @@ require "perpetual_updater"
 require 'yaml'
 
 # Find project according to run_name
-config_file = File.expand_path(File.join File.dirname(__FILE__), "#{standalone_config_name}")
+config_file = File.expand_path(File.join File.dirname(__FILE__), "#{config_name}")
 
 opts = PerpetualTreeConfiguration::Configurator.new(config_file).conf
 all_experiments = YAML.load(File.read opts['experiments_file'])
@@ -186,25 +178,28 @@ end
 
 p = ProjectData.new name, best_bunch_size, parsimony_starting_size, initial_phylip
 p.check_input
-p.print_standalone_config
+p.print_config
 p.print_cron_job
 
-# Starter script ?
+# Generate a starter script 
 if initial_phylip
+  # User provides the alignment
   p.print_starter_shell_script
 else
+  # Script where PHLAWD is used to generate the alignment
   FileUtils.copy "#{p.install_path}/scripts/run_perpetual_example.rb", Dir.pwd
 end
-# This one is useful to have 
+# This one is useful to have  to analyze post results
 FileUtils.copy "#{p.install_path}/scripts/summarize_results.rb", Dir.pwd
 
-# Remote config script just copied (required if we call this with remote)
-if not File.exist?(p.remote_config_file_name)
-  remote_config_file = "#{p.install_path}/templates/#{p.remote_config_file_name}"
-  if File.exist? remote_config_file
-    FileUtils.copy remote_config_file, Dir.pwd
-  else
-    puts "Using Standalone mode"
+# Copy a default remote config script(required if we call this with remote)
+if pumper_version == 'remote'
+  if not File.exist?(p.remote_config_file_name)
+    remote_config_file = "#{p.install_path}/templates/#{p.remote_config_file_name}"
+    if File.exist? remote_config_file
+      FileUtils.copy remote_config_file, Dir.pwd
+    else
+      puts "WARNING: Remote mode but could not find a remote config file in #{remote_config_file}"
+    end
   end
 end
-

@@ -49,7 +49,7 @@ Dir.chdir(results_dir) do
     # Now report the stats of number of iteration from the log files
     puts "Search Iterations: " + r.search_iterations.to_floatstats 
 
-    ## Now we manually do a RF-analysis (TODO refactor)
+    ## Now we manually do a RF-analysis 
 
     # Generate bunch
     curdir = File.expand_path d
@@ -91,19 +91,14 @@ Dir.chdir(results_dir) do
     best_tree = File.join curdir, "../best_ml_trees", "best_bunch.nw"
     if File.exist? best_tree
       best_newick = PerpetualNewick::NewickFile.new(best_tree).newickStrings[0]
-      #PerpetualNewick::NewickFile.new(best_tree).newickStrings.each do |best_newick|
       support_values = best_newick.support_values
       num = support_values.size
       puts "#{num} SH-like local support values distribution (as descr. in phyml 3.0)"
-      #support = Hash.new(0)
-      #support_values.sort.each { |v| support[v] += 1 }
-      #support.each {|k,v| puts "#{k}: #{v}"}
       support_hist = Hash.new(0)
       support_values.sort.each { |v| support_hist[v/10] += 1 }
       support_hist.each {|k,v| puts ">=#{k.to_i * 10}: #{v} (#{((v.to_f/num.to_f)*100).r_to(2)}%)"}
       sum_support = support_values.inject(:+)
       puts "Sum of all support: #{sum_support}, avg per node: #{(sum_support.to_f/num.to_f).r_to(2)}"
-      #end
     end
   end
 end
