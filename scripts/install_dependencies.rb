@@ -27,16 +27,17 @@ pumper_install_dir = File.expand_path opts['install_dir']
 pumper_bin_dir     = File.expand_path opts['bin_dir'] 
 executables = %w(PUMPER  PUMPER_GENERATE)
 
-# Install the specified version accoding to the Rakefile instruccions (see Rakefile for details)
+# Install additional requirements for specified version
 log.info "\nInstalling PUmPER (#{input} mode) in #{pumper_install_dir}"
 if input == "standalone"
   install_raxml_locally(log) # raxml will run locally
-  log.exec "rake install_standalone", "PUmPER_standalone_installation"
 else
   install_gems_remote(log)   # raxml will run in a cluster
-  log.exec "rake install_standalone", "PUmPER_remote_installation"
   executables += %w(PUMPER_FINISH)
 end
+
+# Install the specified version accoding to the Rakefile instruccions (see Rakefile for details)
+log.exec "rake install_#{input}", "PUmPER_#{input}_installation"
 
 # Check if installation was OK
 log.info "\nChecking for succesful installation of PUmPER ..."
