@@ -69,9 +69,9 @@ class TreeBunchStarter
     dirs.each do |d|
       if not File.exist?(d)
         FileUtils.mkdir_p d
-        logput "Created " + d
+        logput "Created " + pumper_path(d)
       else
-        logput "Exists " + d
+        logput "Exists " + pumper_path(d)
         ready = false
       end
     end
@@ -91,12 +91,14 @@ class TreeBunchStarter
       num_parsi_trees = opts[:num_parsi_trees] || @num_parsi_trees
       num_bestML_trees = opts[:num_bestML_trees] || @num_bestML_trees
       if opts[:initial_iteration]
-        logput "Initial iteration, checking num_bestML_trees > num_parsi_trees\n----"
-        phylip_dataset = @phylip
+        logputgreen "Initial iteration"
         num_iteration_trees = num_parsi_trees
+        logput "#{num_iteration_trees} ML trees will be generated from #{num_parsi_trees} new parsimony trees"
+        phylip_dataset = @phylip
         @update_id = 0
       else
-        logput "update iteration, looking for parsimony start trees from previous bunch\n----"
+        logputgreen "Update iteration"
+        logput "Looking for parsimony start trees from previous bunch\n----"
         phylip_dataset = @phylip_updated
         raise "prev bunch not ready #{@prev_bestML_bunch}" unless File.exist?(@prev_bestML_bunch)
         last_best_bunch = PerpetualNewick::NewickFile.new(@prev_bestML_bunch)
@@ -104,13 +106,14 @@ class TreeBunchStarter
         prev_trees = Dir.entries(@parsimony_trees_dir).select{|f| f =~ /^prev_parsi_tree/}
         prev_trees_paths = prev_trees.map{|f| File.join @parsimony_trees_dir, f}
         num_iteration_trees = num_parsi_trees * prev_trees.size
-        logput "#{prev_trees.size} initial trees available for this iteration, each will be input for #{num_parsi_trees} parsimonator runs, leading to #{num_iteration_trees} different parsimony starting trees for the new alignment"
+        logput "#{prev_trees.size} initial trees available from previous iteration"
+        logput "#{num_iteration_trees} ML trees will be generated, based on #{num_parsi_trees} new parsimony trees from each #{prev_trees.size} previous tree"
       end
       if num_bestML_trees > num_iteration_trees 
         raise "#bestML trees (#{num_bestML_trees}) cant be higher than iteration number of trees #{num_iteration_trees}"
       end
       logputgreen "****** Start iteration no #{@update_id} ********"
-      logputgreen "step 1 of 2 : Parsimony starting trees #{num_parsi_trees} each\n----"
+      logputgreen "step 1 of 2 : Compute #{num_parsi_trees} Parsimony starting trees\n----"
       if opts[:initial_iteration]
         generate_parsimony_trees(num_parsi_trees)
         parsimony_trees_dir = @parsimony_trees_dir
@@ -118,13 +121,13 @@ class TreeBunchStarter
         update_parsimony_trees(num_parsi_trees, prev_trees)
         parsimony_trees_dir = @parsimony_trees_out_dir
       end
-      logputgreen "step 2 of 2 : ML trees\n----"
+      logputgreen "step 2 of 2 : Compute #{num_iteration_trees} ML trees and select the #{num_bestML_trees} best\n----"
       best_lh = generate_ML_trees(parsimony_trees_dir, phylip_dataset, num_bestML_trees, @partition_file)
       logputgreen "****** Finished iteration no #{@update_id} ********"
-      logput "Bunch of #{num_bestML_trees} initial ML trees ready at #{@bestML_bunch}\n----"
+      logput "Bunch of #{num_bestML_trees} ML trees ready at #{@bestML_bunch}\n----"
       best_lh
     rescue Exception => e
-      logput(e, error = true)
+      logput(e.to_s, error = true)
       raise e
     end
   end
@@ -156,24 +159,22 @@ class TreeBunchStarter
     end
   end
   def generate_parsimony_trees(num_parsi_trees)
-    logput "Starting parsimony with #{num_parsi_trees} trees" 
+    logput "Preparing parsimony runs for #{num_parsi_trees} trees" 
+    logput "Results stored in #{pumper_path(@parsimony_trees_dir)}" 
     num_parsi_trees.times do |i|
-      seed = i + 123 # NOTE the real seed in the remote runs depends on how the runs are distributed, so i am not sure we can exactly replicate the same seeds...
+      seed = i + 123  # this is arbitrary, could be a random number
       parsimonator_opts = {
         :phylip => @phylip,
-        #:num_trees => num_parsi_trees,
         :num_trees => 1,
         :seed => seed,
         :outdir => @parsimony_trees_dir,
-        :stderr => File.join(@parsimony_trees_dir, "err"),
-        :stdout => File.join(@parsimony_trees_dir, "info"),
-        #:name => "parsimony_initial"
+        :stderr => File.join(@parsimony_trees_dir, "err_treeno#{i}"),
+        :stdout => File.join(@parsimony_trees_dir, "info_treeno#{i}"),
         :name => "parsimony_initial_s#{seed}"
       }
-      # NOTE this will generate a directory called test/outdir where some tests will be run, that is in Raxml.before_run and the dir will end up empty, can be safely removed or ignored. 
       parsi = PerpetualTreeMaker::Parsimonator.new(parsimonator_opts)  
-      logput "Start computing parsimony trees of initial bunch"
-      parsi.run
+      logput "\nComputing parsimony tree #{i+1}/#{num_parsi_trees} for the initial iteration"
+      parsi.run(@logger)
     end
     logput "Done with parsimony trees of initial bunch"
   end

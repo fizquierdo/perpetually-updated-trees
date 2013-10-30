@@ -65,18 +65,20 @@ module PerpetualTreeMaker
       end
       available
     end
-    def run
+    def run(logger = nil)
       self.before_run
-      #raise "#{@binary} not found" unless binary_available?
-      #if not binary_available?
-        # TODO check out how to do this with the correct path
-        # use the compiled version from src
-        @binary = File.join(@binary_path, @binary)
-        raise "#{@binary} not found" unless File.exists?(@binary)
-      #end
-      # TODO write this to a log
-      puts "#{@binary} #{@ops}" unless @ops =~ /RUN_NAME/ 
-      system "(#{@binary} #{@ops} 2> #{@stderr}) > #{@stdout}"
+      @binary = File.join(@binary_path, @binary)
+      raise "#{@binary} not found" unless File.exists?(@binary)
+      #call = "#{@binary} #{@ops}" #unless @ops =~ /RUN_NAME/ 
+      call = "(#{@binary} #{@ops} 2> #{@stderr}) > #{@stdout}"
+      if logger.nil?
+        puts call
+      else
+        logger.info call
+        logger.info "STDERR redirected to  #{@stderr}"
+        logger.info "STDOUT redirected to  #{@stdout}"
+      end
+      system call
       self.after_run
     end
     def salute
@@ -84,13 +86,12 @@ module PerpetualTreeMaker
     end
   end
 
-
   class Parsimonator < Raxml
     include TreeCheck
     attr_reader :seed, :num_trees, :newick
     def initialize(opts)
       super(opts)
-      check_correctAlignment
+      #check_correctAlignment
       @num_trees = opts[:num_trees] || 1
       @newick = opts[:newick] || ""
       @binary = 'parsimonator-SSE3'
@@ -111,7 +112,7 @@ module PerpetualTreeMaker
     attr_reader :starting_newick
     def initialize(opts)
       super(opts)
-      check_correctAlignment
+      #check_correctAlignment
       if opts[:starting_newick].nil? or not File.exists?(opts[:starting_newick])
         raise "Raxml Light requires a starting tree" 
       end
@@ -146,7 +147,7 @@ module PerpetualTreeMaker
     include TreeCheck
     def initialize(opts)
       super(opts)
-      check_correctAlignment
+      #check_correctAlignment
       if opts[:starting_newick].nil? or not File.exists?(opts[:starting_newick])
         raise "Scorer requires a starting bunch of trees to score" 
       end
@@ -193,7 +194,7 @@ module PerpetualTreeMaker
     include TreeCheck
     def initialize(opts)
       super(opts)
-      check_correctAlignment
+      #check_correctAlignment
       @num_trees = opts[:num_gamma_trees] 
       if opts[:num_threads].nil? 
         @binary = 'raxmlHPC-SSE3'

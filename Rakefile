@@ -70,7 +70,7 @@ task :install_standalone do
   generate_executable("put.rb", "PUMPER", bin_dir, repl)
 
   # the ruby libraries
-  %w(configuration perpetual_evaluation phlawd rphylip  experiment rraxml   trollop
+  %w(configuration perpetual_evaluation phlawd rphylip  experiment rraxml trollop pumper_helpers
   floatstats perpetual_utils rnewick starter).each do |filename|
     syscopy "lib/#{filename}.rb", libdir  
   end
