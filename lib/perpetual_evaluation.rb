@@ -21,9 +21,14 @@ class ProjectResults
   def lh_rank
     scoring_info_files.map{|i| i.tree_scoring_info}.sort!{|tree1, tree2| tree2[:lh]<=>tree1[:lh]}
   end
-  def print_lh_rank
+  def print_lh_rank(logger = nil)
     lh_rank.each_with_index do |t, i|
-      puts "Tree rank #{i+1}: LH #{t[:lh]} , tree is #{t[:topology_name]}" 
+      tree_info = "Tree rank #{i+1}: LH #{t[:lh]} (#{t[:topology_name]})" 
+      if logger.nil?
+        puts tree_info
+      else
+        logger.info tree_info
+      end
     end
   end
   # Likelihoods only
@@ -68,7 +73,7 @@ class ProjectResults
     timing_files
   end
   def scoring_info_files
-    map_to_info_file entries.grep(/info\.SCORING/)
+    map_to_info_file entries.grep(/info\.SCORING/) # TODO hard-coded dependency in the name!
   end
   def log_files
     entries.grep(/^RAxML_log/)
