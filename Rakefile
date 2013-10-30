@@ -32,7 +32,7 @@ end
 def generate_tutorial(pumper_bin_dir, wdir, args_best, args_parsi)
   # from the testdata
   init_phy = "../testdata/lonicera_10taxa.rbcL.phy"
-  update_args = "--name loni --update-phy ../testdata/lonicera_23taxa.rbcL.phy --parsi-size 2 --bunch-size 1 --config-file standalone_loni.yml"
+  update_args = "--name loni --update-phy ../testdata/lonicera_23taxa.rbcL.phy --parsi-size 2 --bunch-size 1 --config-file pumper_config_loni.yml"
   FileUtils.mkdir wdir
   Dir.chdir(wdir) do 
     # Generate the initial iteration script with the PUmPER generator
@@ -172,3 +172,14 @@ task :pipeline_standalone do
   wdir = "znewpipeline_remote_from_rake_" + timestr
   generate_pipeline pumper_standalone_bin_dir, wdir
 end
+
+# install and run tutorial
+desc "Remove tutorial"
+task :tutorial_clean do
+  system "rm -rf ztutorial_*_from_rake*"
+end
+desc "Install standalone and generate tutorial"
+task :demo => [:install_standalone, :tutorial_clean, :tutorial_standalone] do
+  puts "ls ztutorial_*_from_rake*"
+end
+

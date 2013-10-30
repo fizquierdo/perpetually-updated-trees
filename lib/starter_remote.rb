@@ -121,22 +121,21 @@ class TreeBunchStarter
     # defaults , do we want defaults here?
     @num_parsi_trees = 4 
     @num_bestML_trees = @num_parsi_trees / 2 
-    #  
 
     # if it is an update this info is already in opts[]
     @CAT_topology_bunch = File.join @ml_trees_dir, "CAT_topology_bunch.nw"
     @CAT_topology_bunch_order = File.join @ml_trees_dir, "CAT_topology_bunch_order.txt"
 
-    # TODO all these are just options for CycleController, would be better to do opts mass assignment
-    @iteration_results_name = opts[:iteration_results_name]
-
-    @bestML_trees_dir = File.join @base_dir, opts[:best_ml_folder_name]
-    @bestML_bunch = File.join @bestML_trees_dir, opts[:best_ml_bunch_name]
-    @prev_bestML_bunch = File.join @prev_dir, opts[:best_ml_folder_name], opts[:best_ml_bunch_name] unless @prev_dir.nil?
-    # cluster 
-    @remote_config_file = opts[:remote_config_file] 
+    cnf = opts[:conf] 
+    @iteration_results_name = cnf['iteration_results_name']
+    @bestML_trees_dir = File.join @base_dir, cnf['best_ml_folder_name']
+    @bestML_bunch = File.join @bestML_trees_dir, cnf['best_ml_bunch_name']
+    @prev_bestML_bunch = File.join @prev_dir, cnf['best_ml_folder_name'], cnf['best_ml_bunch_name'] unless @prev_dir.nil?
+    # information on remote cluster
+    @remote_config_file = cnf['remote_config_file'] 
     # logging locally
-    @logpath = File.join @base_dir, "cycle.log"
+    #@logpath = File.join @base_dir, cnf['iteration_log_name']
+    @logpath = cnf['iteration_log_name']
   end
   def logput(msg, error = false)
     @logger ||= Logger.new(@logpath)

@@ -14,6 +14,7 @@ class ProjectData
     @remote_config_file_name = "remote_config.yml" #this one is assumed not to change for a group
     @best_bunch_name = "best_bunch.nw" 
     @iteration_results_name = "iteration_results.txt" 
+    @iteration_log_name = "iterations.log" 
     # phlawd specific
     @phlawd_binary = "PHLAWD"
     @phlawd_autoupdate_info = "update_info"
@@ -82,6 +83,7 @@ put: /usr/bin/PUT
 best_ml_folder_name: best_ml_trees
 best_ml_bunch_name: #{@best_bunch_name}
 iteration_results_name: #{@iteration_results_name}
+iteration_log_name: #{@iteration_log_name}
 END_CONFIGFILE_HEADER
 
 configfile_tail = <<END_CONFIGFILE_TAIL

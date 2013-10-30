@@ -110,7 +110,7 @@ class ExperimentList
     existing_items = find_by_name(name)
     unless existing_items.nil?
        if existing_items.size >= 1
-         puts "A expremient with this name exists already"
+         puts "A experiment with this name exists already"
          p existing_items
          return false
        end
