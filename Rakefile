@@ -3,6 +3,9 @@ load 'lib/configuration.rb'
 
 opts = PerpetualTreeConfiguration::Configurator.new("config/local_config.yml").conf
 
+pumper_libs =  %w(configuration perpetual_evaluation phlawd rphylip experiment pumper_helpers
+                  trollop pumper_helpers floatstats perpetual_utils rnewick)
+
 def syscopy(from, to)
   #system "sudo cp #{from} #{to}"
   system "cp #{from} #{to}"
@@ -70,8 +73,9 @@ task :install_standalone do
   generate_executable("put.rb", "PUMPER", bin_dir, repl)
 
   # the ruby libraries
-  %w(configuration perpetual_evaluation phlawd rphylip  experiment rraxml trollop pumper_helpers
   floatstats perpetual_utils rnewick starter).each do |filename|
+  pumper_libs += %w(starter)
+  pumper_libs.each do |filename|
     syscopy "lib/#{filename}.rb", libdir  
   end
   # the raxml binaries
@@ -109,9 +113,8 @@ task :install_remote do
   generate_executable("scripts/finish_iteration.rb", "PUMPER_FINISH", bin_dir, repl)
 
   # the ruby libraries
-  %w(configuration perpetual_evaluation phlawd rphylip starter_remote
-  experiment     perpetual_updater    remote_job  trollop
-  floatstats     perpetual_utils      rnewick).each do |filename|
+  pumper_libs += %w(starter_remote perpetual_updater remote_job)
+  pumper_libs.each do |filename|
     syscopy "lib/#{filename}.rb", libdir  
   end
 
