@@ -3,7 +3,7 @@ load 'lib/configuration.rb'
 
 opts = PerpetualTreeConfiguration::Configurator.new("config/local_config.yml").conf
 
-pumper_libs =  %w(configuration perpetual_evaluation phlawd rphylip experiment pumper_helpers
+pumper_libs = %w(configuration perpetual_evaluation phlawd rphylip experiment pumper_helpers
                   trollop pumper_helpers floatstats perpetual_utils rnewick)
 
 def syscopy(from, to)
@@ -73,7 +73,6 @@ task :install_standalone do
   generate_executable("put.rb", "PUMPER", bin_dir, repl)
 
   # the ruby libraries
-  floatstats perpetual_utils rnewick starter).each do |filename|
   pumper_libs += %w(starter)
   pumper_libs.each do |filename|
     syscopy "lib/#{filename}.rb", libdir  
