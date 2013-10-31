@@ -39,7 +39,8 @@ Dir.chdir(results_dir) do
     next if d =~ /failed/
     r.info_files_dir = d
     puts "\nDir #{r.info_files_dir}"
-    puts "WARNING: Not all #{r.expected_set} trees have been collected" unless r.has_collected_all_trees?
+    #puts "WARNING: Not all #{r.expected_set} trees have been collected" unless r.has_collected_all_trees?
+    puts "#{r.lhs.size} trees trees have been collected" 
     puts "Likelihood: " + r.lhs.to_floatstats
     r.best_set = r.lhs.size if r.lhs.size < r.best_set
     puts "Likelihood: " + r.best_lhs.to_floatstats + "[best set]"
