@@ -33,8 +33,8 @@ class InstallLogger
 end
 
 def install_raxml_locally(log)
-  # check wget, unzip exists
-  %w(wget unzip gcc).each do |tool|
+  # check curl, unzip exists
+  %w(curl unzip gcc).each do |tool|
     log.error "#{tool} could not be found. Automated installation aborted." if `which #{tool}`.empty?
   end
 
@@ -80,7 +80,8 @@ def install_raxml_locally(log)
       end
     end
     unless installed
-      log.error "Failed to download #{binary_name}" unless system "wget --no-check-certificate #{program[:link]}"
+      #log.error "Failed to download #{binary_name}" unless system "wget --no-check-certificate #{program[:link]}"
+      log.error "Failed to download #{binary_name}" unless system "curl -O #{program[:link]}"
       log.error "Failed to unzip #{zipped}" unless system "unzip #{zipped}"
       Dir.chdir(folder) do
         versions.each do |key, v|
