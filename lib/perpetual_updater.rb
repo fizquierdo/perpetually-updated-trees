@@ -4,6 +4,7 @@ require "starter_remote"
 require "experiment"
 require 'fileutils'
 require 'perpetual_utils'
+require 'pumper_helpers'
 require 'logger'
 require 'phlawd' 
 
@@ -120,22 +121,24 @@ class PerpetualProject
                                    :partition_file => partition_file,
                                    :prev_dir => last_folder,
                                    :base_dir => experiment_folder(next_iteration.to_s),
-                                   :remote_config_file => @opts['remote_config_file'],
-                                   :remote => @opts['remote'],
                                    :update_id => next_iteration.to_i,
                                    :num_threads => @opts[:num_threads],
-                                   :iteration_results_name => @opts['iteration_results_name'],
-                                   :best_ml_folder_name => @opts['best_ml_folder_name'],
-                                   :best_ml_bunch_name => @opts['best_ml_bunch_name']
+                                   :conf => {
+                                     'remote_config_file' => @opts['remote_config_file'],
+                                     'iteration_results_name' => @opts['iteration_results_name'],
+                                     'best_ml_folder_name' => @opts['best_ml_folder_name'],
+                                     'best_ml_bunch_name' => @opts['best_ml_bunch_name']
+                                   }
                                   )
     if updater.ready?
       best_lh = updater.start_iteration(:num_parsi_trees => @parsi_size,
                                         :num_bestML_trees => @bunch_size,
                                         :exp_name => @name,
-                                        :initial_iteration => false
+                                        :initial_iteration => false,
+                                        :scratch => false)
                                         )
       update_info = best_lh             
-      update_info = ",done at #{Time.now}, bestLH: #{best_lh}" unless best_lh == "cluster"
+      update_info = ",done #{pumper_time}, bestLH: #{best_lh}" unless best_lh == "cluster"
       list.update(@name, "u#{next_iteration}", update_info)
       list.update(@name, "u#{next_iteration}_phy", alignment)
     else

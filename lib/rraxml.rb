@@ -189,33 +189,4 @@ module PerpetualTreeMaker
     def gather_outfiles
     end
   end
-
-  class RaxmlGammaSearch < Raxml
-    include TreeCheck
-    def initialize(opts)
-      super(opts)
-      #check_correctAlignment
-      @num_trees = opts[:num_gamma_trees] 
-      if opts[:num_threads].nil? 
-        @binary = 'raxmlHPC-SSE3'
-        @num_threads = 0
-      else
-        @binary = 'raxmlHPC-PTHREADS-SSE3'
-        @num_threads = opts[:num_threads].to_i
-      end
-    end
-    def complete_call
-      @ops += " -m GTRCAT -p #{@seed} -N #{@num_trees}"
-      @ops += " -T #{@num_threads} " if @num_threads > 0
-    end
-    def gather_outfiles
-      @outfiles += ["RAxML_bestTree.#{@name}"]
-      other_files = ["result", "log", "parsimonyTree"]
-      if @num_trees > 1
-        @num_trees.times{|num| @outfiles += other_files.map{|n| "RAxML_" + n + ".#{@name}.RUN.#{num.to_s}"} }
-      else
-        @outfiles += other_files.map{|n| "RAxML_" + n + ".#{@name}"}
-      end
-    end
-  end
 end

@@ -70,7 +70,7 @@ best_bunch_size: #{@best_bunch_size}
 updates_log: #{File.join project_dir, 'updates.log'}
 
 # All the output will be written here (do not change)
-experiments_file: #{File.expand_path 'experiments.yml'}
+experiments_file: #{File.expand_path 'pumper_experiments.yml'}
 experiments_folder: #{experiments_dir}
 
 # Generated alignments should be here

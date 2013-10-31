@@ -164,7 +164,7 @@ class TreeBunchStarter
       logput "Copying new update alignment (not expanding) from #{@phylip} to #{@phylip_updated}"
       FileUtils.cp @phylip, @phylip_updated 
     end
-    FileUtils.cp @partition_file, @alignment_dir if File.exist? @partition_file
+    FileUtils.cp @partition_file, @alignment_dir if @partition_file and File.exist? @partition_file
     ready
   end
   def start_iteration(opts)

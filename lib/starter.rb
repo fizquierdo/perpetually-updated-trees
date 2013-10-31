@@ -81,7 +81,7 @@ class TreeBunchStarter
       logput "Copying new update alignment (not expanding) from #{@phylip} to #{@phylip_updated}"
       FileUtils.cp @phylip, @phylip_updated 
     end
-    FileUtils.cp @partition_file, @alignment_dir if File.exist? @partition_file
+    FileUtils.cp @partition_file, @alignment_dir if @partition_File and File.exist? @partition_file
     ready
   end
   def start_iteration(opts)
@@ -97,24 +97,31 @@ class TreeBunchStarter
         logput "#{num_iteration_trees} ML trees will be generated from #{num_parsi_trees} new parsimony trees"
         phylip_dataset = @phylip
       else
-        logputgreen "Update iteration"
-        logput "Looking for parsimony start trees from previous bunch\n----"
         phylip_dataset = @phylip_updated
-        raise "prev bunch not ready #{@prev_bestML_bunch}" unless File.exist?(@prev_bestML_bunch)
-        last_best_bunch = PerpetualNewick::NewickFile.new(@prev_bestML_bunch)
-        last_best_bunch.save_each_newick_as(File.join(@parsimony_trees_dir, 'prev_parsi_tree'), "nw") 
-        prev_trees = Dir.entries(@parsimony_trees_dir).select{|f| f =~ /^prev_parsi_tree/}
-        prev_trees_paths = prev_trees.map{|f| File.join @parsimony_trees_dir, f}
-        num_iteration_trees = num_parsi_trees * prev_trees.size
-        logput "#{prev_trees.size} initial trees available from previous iteration"
-        logput "#{num_iteration_trees} ML trees will be generated, based on #{num_parsi_trees} new parsimony trees from each #{prev_trees.size} previous tree"
+        if opts[:scratch]
+          logputgreen "Update iteration (from scratch)"
+          logput "Ignoring trees from previous bunch\n----"
+          num_iteration_trees = num_parsi_trees 
+          logput "#{num_iteration_trees} ML trees will be generated from #{num_parsi_trees} new parsimony trees"
+        else
+          logputgreen "Update iteration"
+          logput "Looking for parsimony start trees from previous bunch\n----"
+          raise "prev bunch not ready #{@prev_bestML_bunch}" unless File.exist?(@prev_bestML_bunch)
+          last_best_bunch = PerpetualNewick::NewickFile.new(@prev_bestML_bunch)
+          last_best_bunch.save_each_newick_as(File.join(@parsimony_trees_dir, 'prev_parsi_tree'), "nw") 
+          prev_trees = Dir.entries(@parsimony_trees_dir).select{|f| f =~ /^prev_parsi_tree/}
+          prev_trees_paths = prev_trees.map{|f| File.join @parsimony_trees_dir, f}
+          num_iteration_trees = num_parsi_trees * prev_trees.size
+          logput "#{prev_trees.size} initial trees available from previous iteration"
+          logput "#{num_iteration_trees} ML trees will be generated, based on #{num_parsi_trees} new parsimony trees from each #{prev_trees.size} previous tree"
+        end
       end
       if num_bestML_trees > num_iteration_trees 
         raise "#bestML trees (#{num_bestML_trees}) cant be higher than iteration number of trees #{num_iteration_trees}"
       end
       logputgreen "****** Start iteration number #{@update_id} ********"
       logputgreen "\nStep 1 of 2 : Compute #{num_parsi_trees} Parsimony starting trees\n----"
-      if opts[:initial_iteration]
+      if opts[:initial_iteration] or opts[:scratch]
         generate_parsimony_trees(num_parsi_trees)
         parsimony_trees_dir = @parsimony_trees_dir
       else
@@ -131,24 +138,6 @@ class TreeBunchStarter
       raise e
     end
   end
-  def search_std(num_gamma_trees = nil)
-    search_opts = {
-      :phylip => @phylip,
-      :partition_file => @partition_file,
-      :outdir => @ml_trees_dir,
-      :num_gamma_trees => num_gamma_trees || 1, 
-      :stderr => File.join(@ml_trees_dir, "err"),
-      :stdout => File.join(@ml_trees_dir, "info"),
-      :name => "std_GAMMA_search" 
-    }
-    search_opts.merge!({:num_threads => @num_threads}) if @num_threads.to_i > 0
-    r = RaxmlGammaSearch.new(search_opts)
-    logput "Start ML search from scratch with #{num_gamma_trees} trees"
-    r.run
-    bestLH = File.open(r.stdout).readlines.find{|l| l =~ /^Final GAMMA-based Score of best/}.chomp.split("tree").last
-    logput "Done ML search from scratch with #{num_gamma_trees} trees"
-    bestLH
-  end
   private
   def check_options(opts)
     supported_opts = [:num_parsi_trees, :num_bestML_trees, :exp_name, :cycle_batch_script, :initial_iteration]
@@ -162,7 +151,8 @@ class TreeBunchStarter
     logput "Preparing parsimony runs for #{num_parsi_trees} trees" 
     logput "Results stored in #{pumper_path(@parsimony_trees_dir)}" 
     num_parsi_trees.times do |i|
-      seed = i + 123  # this is arbitrary, could be a random number
+      #seed = i + 123  # this is arbitrary, could be a random number
+      seed = pumper_random_seed
       parsimonator_opts = {
         :phylip => @phylip,
         :num_trees => 1,
@@ -184,6 +174,7 @@ class TreeBunchStarter
       parsimonator_opts = {
         :phylip => @phylip_updated,
         :num_trees => num_parsi_trees,
+        :seed => pumper_random_seed,
         :newick => File.join(@parsimony_trees_dir, parsi_start_tree),
         :outdir => @parsimony_trees_out_dir,
         :stderr => File.join(@parsimony_trees_out_dir, "err_#{parsi_start_tree}"),
@@ -193,7 +184,7 @@ class TreeBunchStarter
       parsi = PerpetualTreeMaker::Parsimonator.new(parsimonator_opts)  
       logput "Start computing parsimony trees of #{parsi_start_tree}, #{i+1} of #{trees.size}"
       parsi.run(@logger)
-      logput "run with options #{parsi.ops.to_s}"
+      logput "Update run with options #{parsi.ops.to_s}"
       logput "Done with parsimony trees of #{parsi_start_tree}, #{i+1} of #{trees.size}"
     end 
   end

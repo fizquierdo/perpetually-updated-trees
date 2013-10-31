@@ -41,16 +41,17 @@ class ExperimentList
   end
   def add(opts)
     name_available = self.name_available?(opts[:name]) 
+    added = false
     if name_available
       newexp = {:name => opts[:name], :date => Time.now}
-      #newexp.merge!({:fake_phy => opts[:fake_phy]}) unless opts[:fake_phy].nil?
-      [:fake_phy, :initial_phy, :parsi_size, :bunch_size].each do |label|
+      [:initial_phy, :parsi_size, :bunch_size].each do |label|
         newexp.merge!({label => opts[label]}) unless opts[label].nil?
       end
       @list.push newexp
       self.save
-      true
+      added = true
     end
+    added 
   end
   def value(name, label)
     e = self.find_by_name(name) 
@@ -81,14 +82,12 @@ class ExperimentList
     puts "Current Experiments"
     puts "ID\tname"
     @list.each_with_index  do |item, i|
-      fake_name = item[:fake_phy].nil? ? "-" : File.basename(item[:fake_phy]) 
       initial_name = item[:initial_phy].nil? ? "-" : File.basename(item[:initial_phy]) 
       parsi_size = item[:parsi_size] || "?"
       bunch_size = item[:bunch_size] || "?"
       str = "#{i}\t#{item[:name]}"
       str += " \tinit: #{initial_name}" unless initial_name.empty?
-      str += " \tfake: #{fake_name}" unless fake_name.empty?
-      str += " Best LH: #{item["bestLH"]} (parsi #{parsi_size}, bunch end size #{bunch_size})"
+      str += " Best LH: #{item["bestLH"]} (#{parsi_size} p trees, #{bunch_size} end trees)"
       puts str
       item.keys.select{|k| k =~ /^u\d+$/}.sort.each do |update_key|
         puts "  #{update_key}: #{item[update_key]}"
@@ -110,7 +109,7 @@ class ExperimentList
     existing_items = find_by_name(name)
     unless existing_items.nil?
        if existing_items.size >= 1
-         puts "A experiment with this name exists already"
+         puts "A PUmPER experiment with this name exists already"
          p existing_items
          return false
        end
