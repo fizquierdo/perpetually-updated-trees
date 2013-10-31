@@ -75,13 +75,21 @@ class TreeBunchStarter
         ready = false
       end
     end
+    # Copy partition file
     if @update_id == 0
       FileUtils.cp @phylip, @alignment_dir 
     else
       logput "Copying new update alignment (not expanding) from #{@phylip} to #{@phylip_updated}"
       FileUtils.cp @phylip, @phylip_updated 
     end
-    FileUtils.cp @partition_file, @alignment_dir if @partition_File and File.exist? @partition_file
+    # Copy partition file
+    if @partition_file
+      if File.exist? @partition_file
+        FileUtils.cp @partition_file, @alignment_dir 
+      else
+        raise "#{@partition_file} cannot be found"
+      end
+    end
     ready
   end
   def start_iteration(opts)
@@ -140,7 +148,7 @@ class TreeBunchStarter
   end
   private
   def check_options(opts)
-    supported_opts = [:num_parsi_trees, :num_bestML_trees, :exp_name, :cycle_batch_script, :initial_iteration]
+    supported_opts = [:scratch, :num_parsi_trees, :num_bestML_trees, :exp_name, :cycle_batch_script, :initial_iteration]
     opts.keys.each do |key|
       unless supported_opts.include?(key)
         logput "Option #{key} is unknwon"
@@ -188,7 +196,11 @@ class TreeBunchStarter
       logput "Done with parsimony trees of #{parsi_start_tree}, #{i+1} of #{trees.size}"
     end 
   end
-  def generate_ML_trees(starting_trees_dir, phylip, num_bestML_trees, partition_file)
+  def generate_ML_trees(starting_trees_dir, phylip, num_bestML_trees, partition_file = nil)
+    unless partition_file.nil?
+      partition_file = File.expand_path(File.join(@alignment_dir, File.basename(partition_file)))
+      raise "partition file #{partition_file} not found" unless File.exist? partition_file
+    end
     logput "Preparing ML searches ..."
     starting_trees = Dir.entries(starting_trees_dir).select{|f| f =~ /^RAxML_parsimonyTree/}
     raise "no starting trees available" if starting_trees.nil? or starting_trees.size < 1

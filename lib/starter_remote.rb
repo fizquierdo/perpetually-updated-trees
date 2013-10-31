@@ -219,7 +219,7 @@ class TreeBunchStarter
   end
   private
   def check_options(opts)
-    supported_opts = [:num_parsi_trees, :num_bestML_trees, :exp_name, :cycle_batch_script, :initial_iteration]
+    supported_opts = [:scratch, :num_parsi_trees, :num_bestML_trees, :exp_name, :cycle_batch_script, :initial_iteration]
     opts.keys.each do |key|
       unless supported_opts.include?(key)
         logput "Option #{key} is unknwon"
