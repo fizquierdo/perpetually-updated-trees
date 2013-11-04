@@ -78,7 +78,8 @@ task :install_standalone do
     syscopy "lib/#{filename}.rb", libdir  
   end
   # the raxml binaries
-  syslink "bin/*", bin_dir
+  #syslink "bin/*", bin_dir
+  syscopy "bin/*", bin_dir
   # the basic example
   generate_executable("scripts/run_perpetual_example.rb", "run_perpetual_example.rb", scriptdir, repl)
   FileUtils.cp_r "testdata", install_dir
