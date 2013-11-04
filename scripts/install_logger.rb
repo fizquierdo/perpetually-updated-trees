@@ -42,32 +42,31 @@ def install_raxml_locally(log)
   FileUtils.mkdir_p binary_dir 
 
   # RAxML-like programs
+  zipped = 'master.zip'
   programs = {
     :Parsimonator => {
     :versions => {
     :sse3          => {:binary => "parsimonator-SSE3", :ready => true,:comp => "Makefile.SSE3.gcc"} },
-    :link => 'https://github.com/stamatak/Parsimonator-1.0.2/archive/master.zip',
+    :link => "https://github.com/stamatak/Parsimonator-1.0.2/archive/#{zipped}",
     :folder => 'Parsimonator-1.0.2-master'}, 
 
     :RaxmlLight => {
     :versions => {
     :sse3          => {:binary => "raxmlLight",         :ready => true,:comp => "Makefile.SSE3.gcc"}, 
     :sse3_pthreads => {:binary => "raxmlLight-PTHREADS",:ready => true,:comp => "Makefile.SSE3.PTHREADS.gcc"}},
-    :link => 'https://github.com/stamatak/RAxML-Light-1.0.5/archive/master.zip',
+    :link => "https://github.com/stamatak/RAxML-Light-1.0.5/archive/#{zipped}",
     :folder => 'RAxML-Light-1.0.5-master'},
 
     :Raxml => {
     :versions => {
     :sse3          => {:binary => "raxmlHPC-SSE3",         :ready => true,:comp => "Makefile.SSE3.gcc"}, 
     :sse3_pthreads => {:binary => "raxmlHPC-PTHREADS-SSE3",:ready => true,:comp => "Makefile.SSE3.PTHREADS.gcc"}},
-    :link => 'https://github.com/stamatak/standard-RAxML/archive/master.zip',
+    :link => "https://github.com/stamatak/standard-RAxML/archive/#{zipped}",
     :folder => 'standard-RAxML-master'}
   }
   programs.each do |key, program|
     log.info "\nChecking #{key.to_s}..."
     installed = true
-    #zipped = 'master.zip'
-    zipped = 'master'
     folder = program[:folder]
     versions = program[:versions]
     versions.each do |key, v|
@@ -81,7 +80,7 @@ def install_raxml_locally(log)
     end
     unless installed
       #log.error "Failed to download #{binary_name}" unless system "wget --no-check-certificate #{program[:link]}"
-      log.error "Failed to download #{binary_name}" unless system "curl -O #{program[:link]}"
+      log.error "Failed to download #{binary_name}" unless system "curl -Lk -o #{zipped} #{program[:link]}"
       log.error "Failed to unzip #{zipped}" unless system "unzip #{zipped}"
       Dir.chdir(folder) do
         versions.each do |key, v|
