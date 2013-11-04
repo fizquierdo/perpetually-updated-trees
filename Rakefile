@@ -8,10 +8,7 @@ pumper_libs = %w(configuration perpetual_evaluation phlawd rphylip experiment pu
 
 def syscopy(from, to)
   #system "sudo cp #{from} #{to}"
-  system "cp #{from} #{to}"
-end
-def syslink(from, to)
-  system "ln --force #{from} #{to}"
+  system "cp -f #{from} #{to}" 
 end
 def sysmkdir(dir)
   #system %{sudo mkdir -p #{dir}}
@@ -35,7 +32,7 @@ end
 def generate_tutorial(pumper_bin_dir, wdir, args_best, args_parsi)
   # from the testdata
   init_phy = "../testdata/lonicera_10taxa.rbcL.phy"
-  update_args = "--name loni_part --update-phy ../testdata/lonicera_23taxa.rbcL.phy --parsi-size 2 --bunch-size 1 --config-file pumper_config_loni.yml"
+  update_args = "--name loni --update-phy ../testdata/lonicera_23taxa.rbcL.phy --parsi-size 2 --bunch-size 1 --config-file pumper_config_loni.yml"
   FileUtils.mkdir wdir
   Dir.chdir(wdir) do 
     # Generate the initial iteration script with the PUmPER generator
@@ -78,7 +75,6 @@ task :install_standalone do
     syscopy "lib/#{filename}.rb", libdir  
   end
   # the raxml binaries
-  #syslink "bin/*", bin_dir
   syscopy "bin/*", bin_dir
   # the basic example
   generate_executable("scripts/run_perpetual_example.rb", "run_perpetual_example.rb", scriptdir, repl)
