@@ -106,7 +106,7 @@ class TreeBunchStarter
 
   def initialize(opts)
     @phylip = opts[:phylip]
-    @partition_file = opts[:partition_file]
+    @partition_file = opts[:partition_file] || ""
     @base_dir = opts[:base_dir]
     @prev_dir = opts[:prev_dir]
     @update_id = opts[:update_id] || 0
