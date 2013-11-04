@@ -73,7 +73,7 @@ task :install_standalone do
   generate_executable("put.rb", "PUMPER", bin_dir, repl)
 
   # the ruby libraries
-  pumper_libs += %w(starter)
+  pumper_libs += %w(starter rraxml)
   pumper_libs.each do |filename|
     syscopy "lib/#{filename}.rb", libdir  
   end
