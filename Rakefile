@@ -8,7 +8,7 @@ pumper_libs = %w(configuration perpetual_evaluation phlawd rphylip experiment pu
 
 def syscopy(from, to)
   #system "sudo cp #{from} #{to}"
-  system "cp -f #{from} #{to}" 
+  system "cp -f #{from} #{to} 2>&1 | grep -v 'are the same file'" 
 end
 def sysmkdir(dir)
   #system %{sudo mkdir -p #{dir}}
@@ -39,7 +39,7 @@ def generate_tutorial(pumper_bin_dir, wdir, args_best, args_parsi)
     system "#{pumper_bin_dir}/PUMPER_GENERATE loni #{args_best} #{args_parsi} #{init_phy}"
     # Generate the update iteration script directly calling PUmPER 
     update_cmd = "#{pumper_bin_dir}/PUMPER #{update_args}"
-    system "echo #{update_cmd} > update_loni_partitions.sh"
+    system "echo #{update_cmd} > update_loni.sh"
   end
 end
 
