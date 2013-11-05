@@ -8,6 +8,7 @@ class Jobber
     @conf = conf 
     @opts = opts
     @log ||= Logger.new opts[:logpath] 
+    @log.datetime_format = "%Y-%m-%d %H:%M:%S"
     begin
       setup_cluster
       calculate_distribution
@@ -17,8 +18,47 @@ class Jobber
       raise exception
     end
   end
+  # send and sumbmit jobs (code transcribed from raxml_batch_cycle.sh)
+  def run_pipeline
+    loginfo "Running pipeline....#{@num_parsimony_batches} parsimony batches "
+    # create the submitter
+    i = 0
+    while i <= @num_parsimony_batches 
+      # Each parsimony batch runs in a different node
+      if i == @num_parsimony_batches  
+        @opts[:num_pars_runs] = @num_runs_extra
+      else
+        @opts[:num_pars_runs] = @opts[:max_runs_node]
+      end
+      loginfo "Start Batch #{i}/#{@num_parsimony_batches}, #{@opts[:num_pars_runs]} parsimony runs/ramllight scripts"
+
+      #build and submit parsimonator script
+      i_formatted = "%03d" % i 
+      loginfo "run identifier: " +  i_formatted.to_s
+      submitter_script = create_submitter_script(i_formatted)
+      build_and_submit_parsimony_script(i, i_formatted, submitter_script)
+      #build and send a raxmllight job for each parsimony tree
+      @opts[:num_pars_runs].times do |j|
+        k = i * @opts[:max_runs_node] + j
+        build_and_send_raxmllight_script(k, i_formatted, submitter_script)
+      end
+      i +=1
+    end
+    loginfo "Done with raxml-light..."
+    # the line below was used for sge submissions
+    #build_and_submit_collector_script(i_formatted, "raxmllight_#{@opts[:exp_name]}_\\*")
+    loginfo "Submission pipeline finished, jobs should be running "
+    titlestr = "Project #{@opts[:exp_name]}, Iteration #{@opts[:update_id]}"
+    content = "Submited from wooster at #{Time.now}\n\n Setup\n #{@opts.to_s} \n\n Conf\n #{@conf.to_s}"
+    mailer = PerpetualTreeEvaluation::Mailer.new(:mail_to => @conf['mail_to'], 
+                                             :title => titlestr, 
+                                             :content_file => @opts[:logpath])
+    mailer.send_mail
+  end
+
+  protected
   def calculate_distribution
-    @log.info "Compute distribution for a total number of #{@opts[:num_ptrees]} topologies"
+    loginfo "Compute distribution for a total number of #{@opts[:num_ptrees]} topologies"
     cores_per_node = @opts[:cores_per_node]
     mem_per_node = @opts[:mem_per_node]
     # Maximum number of parsimonator runs / node
@@ -36,64 +76,25 @@ class Jobber
     if @opts[:raxml_memory_requirements] > mem_per_node 
       @opts[:num_nodes] = @opts[:raxml_memory_requirements] / mem_per_node + 1
       @opts[:num_tasks] = @opts[:num_nodes] * cores_per_node 
-      @log.info "raxmlLight-MPI will be turned on #{@opts[:num_nodes]} using #{@opts[:num_tasks]}"
+      loginfo "raxmlLight-MPI will be turned on #{@opts[:num_nodes]} using #{@opts[:num_tasks]}"
     else 
       @opts[:num_threads] = cores_per_node
       @opts[:num_nodes] = 1
       @opts[:num_tasks] = 1 * cores_per_node 
     end
-    @log.info "Total number of trees in the iteration (number of independent light searches) #{@opts[:num_ptrees]}"
-    @log.info "Num batches (each batch runs in one node) #{@num_parsimony_batches}"
+    loginfo "Total number of trees in the iteration (number of independent light searches) #{@opts[:num_ptrees]}"
+    loginfo "Num batches (each batch runs in one node) #{@num_parsimony_batches}"
   end
-  # send and sumbmit jobs (code transcribed from raxml_batch_cycle.sh)
-  def run_pipeline
-    @log.info "Running pipeline....#{@num_parsimony_batches} parsimony batches "
-    # create the submitter
-    i = 0
-    while i <= @num_parsimony_batches 
-      # Each parsimony batch runs in a different node
-      if i == @num_parsimony_batches  
-        @opts[:num_pars_runs] = @num_runs_extra
-      else
-        @opts[:num_pars_runs] = @opts[:max_runs_node]
-      end
-      @log.info "Start Batch #{i}/#{@num_parsimony_batches}, #{@opts[:num_pars_runs]} parsimony runs/ramllight scripts"
-
-      #build and submit parsimonator script
-      i_formatted = "%03d" % i 
-      @log.info i_formatted
-      submitter_script = create_submitter_script(i_formatted)
-      build_and_submit_parsimony_script(i, i_formatted, submitter_script)
-      #build and send a raxmllight job for each parsimony tree
-      @opts[:num_pars_runs].times do |j|
-        k = i * @opts[:max_runs_node] + j
-        build_and_send_raxmllight_script(k, i_formatted, submitter_script)
-      end
-      i +=1
-    end
-    @log.info "Done with raxml-light..."
-    # the line below was used for sge submissions
-    #build_and_submit_collector_script(i_formatted, "raxmllight_#{@opts[:exp_name]}_\\*")
-    @log.info "Submission pipeline finished, jobs should be running "
-    titlestr = "Project #{@opts[:exp_name]}, Iteration #{@opts[:update_id]}"
-    content = "Submited from wooster at #{Time.now}\n\n Setup\n #{@opts.to_s} \n\n Conf\n #{@conf.to_s}"
-    mailer = PerpetualTreeEvaluation::Mailer.new(:mail_to => @conf['mail_to'], 
-                                             :title => titlestr, 
-                                             :content_file => @opts[:logpath])
-    mailer.send_mail
-  end
-
-  protected
   def send_and_submit(remote_script_dir, local_script, holdstr = nil)
     send_job(remote_script_dir, local_script)
     submit_job(remote_script_dir, local_script, holdstr)
   end
   def send_job(remote_script_dir, local_script)
     scriptname = File.basename local_script
-    @log.info "Sending #{scriptname}" 
+    loginfo "Sending #{scriptname}" 
     if @conf['debug']
-      @log.info File.open(local_script).readlines{|l| @log.info l}
-      @log.info
+      loginfo File.open(local_script).readlines{|l| loginfo l}
+      loginfo ""
     else
       tries = 5
       begin
@@ -103,7 +104,7 @@ class Jobber
       rescue Exception => exception 
         tries -= 1
         if tries > 0
-          @log.info "Sending #{scriptname}, #{tries} attempts left"
+          loginfo "Sending #{scriptname}, #{tries} attempts left"
           retry
         else
           @log.error "Failed to send #{scriptname}"
@@ -116,18 +117,19 @@ class Jobber
     subm_cmd = "sbatch"
     scriptname = File.basename local_script
     scriptname = " -hold_jid #{holdstr}" + " #{scriptname}" unless holdstr.nil?
-    @log.info "Submitting #{scriptname}"
+    loginfo "Submitting #{scriptname}"
     tries = 5
     begin
       Net::SSH.start(@conf['remote_machine'], @conf['remote_user']) do |ssh|
-        res = ssh.exec!("cd #{remote_script_dir} && #{subm_cmd} #{scriptname}")
-        @log.info res
+        ssh_cmd = "cd #{remote_script_dir} && #{subm_cmd} #{scriptname}"
+        res = ssh.exec! ssh_cmd
+        loginfo "Run: #{ssh_cmd}\n" + res.to_s
       end
-      @log.info "Submitted #{scriptname}"
+      loginfo "Submitted #{scriptname}"
     rescue Exception => exception 
       tries -= 1
       if tries > 0
-        @log.info "Submitting #{scriptname}, #{tries} attempts left"
+        loginfo "Submitting #{scriptname}, #{tries} attempts left"
         retry
       else
         @log.error "Failed to submit #{scriptname}"
@@ -146,9 +148,9 @@ class Jobber
   end
 
   def build_script(params, template_name)
-    @log.info "Building/submitting #{params[:scriptname]}"
-    @log.info "Starting tree(light): " + params[:tree_name] if template_name == "template_raxmllight.sge.erb"
-    @log.info
+    loginfo "Building/submitting #{params[:scriptname]}"
+    loginfo "Starting tree(light): " + params[:tree_name] if template_name == "template_raxmllight.sge.erb"
+    loginfo ""
     temp = ERB.new(File.new(File.join @conf['templatedir'], template_name).read)
     scriptname_fullpath = File.join params[:local_script_dir], params[:scriptname]
     File.open(scriptname_fullpath, "w"){|f| f.puts temp.result(binding)}
@@ -218,29 +220,24 @@ class Jobber
     params[:collector_script] = "collector_#{params[:exp_name_run_num]}.sge"
     params[:resub_script] = "post_raxmllight_#{params[:exp_name_run_num]}.rb"
     params[:holdstr] = holdstr
-
     params[:scriptname] = params[:collector_script]
-
-    #build_and_send_script(params, "template_collector.sge.erb")
-    # build_and_submit_script(params, "template_collector.sge.erb", holdstr)
-
-    # This is sent to have a script that can resubmit those jobs that did need a restart
-    # was coded for sge and should be adapted for slurm (once we know how to deal with slurm
-    # collection of results)
-    # params[:scriptname] = params[:resub_script]
-    # build_and_send_script(params, "template_post_raxmllight.rb.erb")
   end
 
   def setup_cluster
     # This info must be read from the cluster config file or whatever logic
-    @log.info "setup cluster"
+    loginfo "setup cluster"
     cluster_spec = @conf['cluster_spec'] || "default.config.yml"
+    loginfo "cluster specs: #{cluster_spec}"
     cluster_config_file = File.join(@conf['templatedir'], cluster_spec)
     raise "No config file about cluster" unless File.exist?(cluster_config_file)
     cluster_conf = YAML.load_file(cluster_config_file)
     cluster_conf.each_pair do |key, value|
       @opts[key.to_sym]  = value
     end
+  end
+  def loginfo(msg)
+    @log.info msg
+    puts msg
   end
 end
 end

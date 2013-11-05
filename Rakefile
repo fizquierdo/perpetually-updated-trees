@@ -4,7 +4,7 @@ load 'lib/configuration.rb'
 opts = PerpetualTreeConfiguration::Configurator.new("config/local_config.yml").conf
 
 pumper_libs = %w(configuration perpetual_evaluation phlawd rphylip experiment pumper_helpers
-                  trollop pumper_helpers floatstats perpetual_utils rnewick)
+                  trollop pumper_helpers floatstats perpetual_utils rnewick starter_base)
 
 def syscopy(from, to)
   #system "sudo cp #{from} #{to}"
@@ -31,15 +31,16 @@ end
 
 def generate_tutorial(pumper_bin_dir, wdir, args_best, args_parsi)
   # from the testdata
+  exp_name = "loni_#{Time.now.to_i}"
   init_phy = "../testdata/lonicera_10taxa.rbcL.phy"
-  update_args = "--name loni --update-phy ../testdata/lonicera_23taxa.rbcL.phy --parsi-size 2 --bunch-size 1 --config-file pumper_config_loni.yml"
+  update_args = "--name #{exp_name} --update-phy ../testdata/lonicera_23taxa.rbcL.phy --parsi-size 2 --bunch-size 1 --config-file pumper_config_loni.yml"
   FileUtils.mkdir wdir
   Dir.chdir(wdir) do 
     # Generate the initial iteration script with the PUmPER generator
-    system "#{pumper_bin_dir}/PUMPER_GENERATE loni #{args_best} #{args_parsi} #{init_phy}"
+    system "#{pumper_bin_dir}/PUMPER_GENERATE #{exp_name} #{args_best} #{args_parsi} #{init_phy}"
     # Generate the update iteration script directly calling PUmPER 
     update_cmd = "#{pumper_bin_dir}/PUMPER #{update_args}"
-    system "echo #{update_cmd} > update_loni.sh"
+    system "echo #{update_cmd} > update_#{exp_name}.sh"
   end
 end
 
@@ -179,6 +180,10 @@ task :tutorial_clean do
 end
 desc "Install standalone and generate tutorial"
 task :demo => [:install_standalone, :tutorial_clean, :tutorial_standalone] do
+  puts "ls ztutorial_*_from_rake*"
+end
+desc "Install remote and generate tutorial"
+task :demoremote => [:install_remote, :tutorial_clean, :tutorial_remote] do
   puts "ls ztutorial_*_from_rake*"
 end
 

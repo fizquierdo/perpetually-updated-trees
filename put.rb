@@ -62,7 +62,7 @@ end
 # load existing experiments
 list = ExperimentTable::ExperimentList.new(expfile)
 
-p opts
+# p opts
 # remove
 if opts[:remove]
   list.remove(opts[:remove])

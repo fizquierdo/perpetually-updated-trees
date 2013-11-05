@@ -24,8 +24,7 @@ class ProjectData
     # Make sure the initial phylip is there
     if @initial_phylip
       raise "Initial phylip ${initial_phylip} not found" unless File.exist?(@initial_phylip)
-      raise "Initial file does not start with project name #{@name}" unless File.basename(@initial_phylip).include?(@name)
-end
+    end
     if @best_bunch_size > @parsimony_starting_size
       raise  ArgumentError, "Collection size #{@best_bunch_size} must be smaller or equal than parsimony starting size #{@parsimony_starting_size}"
     end
