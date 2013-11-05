@@ -19,49 +19,19 @@ class TreeBunchStarter < TreeBunchStarterBase
     logput "Preparing new iteration..."
     check_options(opts)
     begin
-      num_parsi_trees = opts[:num_parsi_trees] || @num_parsi_trees
-      num_bestML_trees = opts[:num_bestML_trees] || @num_bestML_trees
-      if opts[:initial_iteration]
-        @update_id = 0
-        logputgreen "\nInitial iteration (number #{@update_id}):"
-        num_iteration_trees = num_parsi_trees
-        logput "#{num_iteration_trees} ML trees will be generated from #{num_parsi_trees} new parsimony trees"
-        phylip_dataset = @phylip
-      else
-        phylip_dataset = @phylip_updated
-        if opts[:scratch]
-          logputgreen "Update iteration (from scratch)"
-          logput "Ignoring trees from previous bunch\n----"
-          num_iteration_trees = num_parsi_trees 
-          logput "#{num_iteration_trees} ML trees will be generated from #{num_parsi_trees} new parsimony trees"
-        else
-          logputgreen "Update iteration"
-          logput "Looking for parsimony start trees from previous bunch\n----"
-          raise "prev bunch not ready #{@prev_bestML_bunch}" unless File.exist?(@prev_bestML_bunch)
-          last_best_bunch = PerpetualNewick::NewickFile.new(@prev_bestML_bunch)
-          last_best_bunch.save_each_newick_as(File.join(@parsimony_trees_dir, 'prev_parsi_tree'), "nw") 
-          prev_trees = Dir.entries(@parsimony_trees_dir).select{|f| f =~ /^prev_parsi_tree/}
-          prev_trees_paths = prev_trees.map{|f| File.join @parsimony_trees_dir, f}
-          num_iteration_trees = num_parsi_trees * prev_trees.size
-          logput "#{prev_trees.size} initial trees available from previous iteration"
-          logput "#{num_iteration_trees} ML trees will be generated, based on #{num_parsi_trees} new parsimony trees from each #{prev_trees.size} previous tree"
-        end
-      end
-      if num_bestML_trees > num_iteration_trees 
-        raise "#bestML trees (#{num_bestML_trees}) cant be higher than iteration number of trees #{num_iteration_trees}"
-      end
+      iteration_data = prepare_iteration(opts)
       logputgreen "****** Start iteration number #{@update_id} ********"
-      logputgreen "\nStep 1 of 2 : Compute #{num_parsi_trees} Parsimony starting trees\n----"
+      logputgreen "\nStep 1 of 2 : Compute #{iteration_data.num_parsi_trees} Parsimony starting trees\n----"
       if opts[:initial_iteration] or opts[:scratch]
-        generate_parsimony_trees(num_parsi_trees)
+        generate_parsimony_trees iteration_data.num_parsi_trees
         parsimony_trees_dir = @parsimony_trees_dir
       else
-        update_parsimony_trees(num_parsi_trees, prev_trees)
+        update_parsimony_trees iteration_data
         parsimony_trees_dir = @parsimony_trees_out_dir
       end
-      logputgreen "\nStep 2 of 2 : Compute #{num_iteration_trees} ML trees and select the #{num_bestML_trees} best\n----"
-      best_lh = generate_ML_trees(parsimony_trees_dir, phylip_dataset, num_bestML_trees, @partition_file)
-      logput "Bunch of #{num_bestML_trees} best ML trees ready at #{pumper_path @bestML_bunch}\n----"
+      logputgreen "\nStep 2 of 2 : Compute #{iteration_data.num_trees} ML trees and select the #{iteration_data.num_bestML_trees} best\n----"
+      best_lh = generate_ML_trees(parsimony_trees_dir, iteration_data, @partition_file)
+      logput "Bunch of #{iteration_data.num_bestML_trees} best ML trees ready at #{pumper_path @bestML_bunch}\n----"
       logputgreen "****** Finished iteration no #{@update_id} ********"
       best_lh
     rescue Exception => e
@@ -70,14 +40,6 @@ class TreeBunchStarter < TreeBunchStarterBase
     end
   end
   private
-  def check_options(opts)
-    supported_opts = [:scratch, :num_parsi_trees, :num_bestML_trees, :exp_name, :cycle_batch_script, :initial_iteration]
-    opts.keys.each do |key|
-      unless supported_opts.include?(key)
-        logput "Option #{key} is unknwon"
-      end
-    end
-  end
   def generate_parsimony_trees(num_parsi_trees)
     logput "Preparing parsimony runs for #{num_parsi_trees} trees" 
     logput "Results stored in #{pumper_path(@parsimony_trees_dir)}" 
@@ -99,7 +61,9 @@ class TreeBunchStarter < TreeBunchStarterBase
     end
     logput "Done with parsimony trees of initial bunch"
   end
-  def update_parsimony_trees(num_parsi_trees, trees)
+  def update_parsimony_trees(iteration_data)
+    num_parsi_trees = iteration_data.num_parsi_trees 
+    trees           = iteration_data.prev_trees 
     trees.each_with_index do |parsi_start_tree, i|
       logput "Starting new parsimony tree with #{parsi_start_tree} trees" 
       parsimonator_opts = {
@@ -119,7 +83,9 @@ class TreeBunchStarter < TreeBunchStarterBase
       logput "Done with parsimony trees of #{parsi_start_tree}, #{i+1} of #{trees.size}"
     end 
   end
-  def generate_ML_trees(starting_trees_dir, phylip, num_bestML_trees, partition_file = nil)
+  def generate_ML_trees(starting_trees_dir, iteration_data, partition_file = nil)
+    phylip           = iteration_data.phylip_dataset
+    num_bestML_trees = iteration_data.num_bestML_trees
     unless partition_file.nil? or partition_file.empty?
       partition_file = File.expand_path(File.join(@alignment_dir, File.basename(partition_file)))
       raise "partition file #{partition_file} not found" unless File.exist? partition_file

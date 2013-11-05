@@ -15,21 +15,19 @@ require 'net/scp'
 
 class CycleController
   attr_reader :opts
-  def initialize(opts, skip_phylip = false)
+  def initialize(opts)
     @opts = opts
-    unless skip_phylip
-      @opts[:num_ptrees] ||= @opts[:num_parsi_trees]
-      @numtaxa, @seqlen  = File.open(@opts[:phy]).readlines.first.split.map{|w| w.to_i}
-    end
+    @opts[:num_ptrees] ||= @opts[:num_parsi_trees]
+    @numtaxa, @seqlen  = File.open(@opts[:phy]).readlines.first.split.map{|w| w.to_i}
     # Read from an user-protected config file
     @conf = YAML.load_file(opts[:remote_config_file])
     # and a few helpers, this is all relative to the config above so we can fix it 
-    @base_remote_dir = File.join @conf['remote_path'], "experiments/#{@opts[:exp_name]}/output/batch_#{@opts[:update_id]}"
+    @base_remote_dir = File.join @conf['remote_path'], "experiments/#{@opts[:exp_name]}/output/bunch_#{@opts[:update_id]}"
     @opts[:alignment_remote_dir] = File.join @base_remote_dir, "alignments"
     @opts[:parsimony_remote_dir] = File.join @base_remote_dir, "parsimony_trees"
     @opts[:ml_remote_dir] = File.join @base_remote_dir, "ml_trees"
     @log ||= Logger.new @opts[:logpath]
-    @log.info "Start cycle #{@opts[:update_id]} with options #{@opts.to_s}"
+    #@log.info "Start cycle #{@opts[:update_id]} with options #{@opts.to_s}"
   end
   # NOTE these requirements are specific for our system, should be on a config file
   def parsimonator_requirements
@@ -41,6 +39,7 @@ class CycleController
     required_MB.to_i
   end
   def raxmllight_requirements
+    # this depends on the type of data!
     #(n-2) * m * ( 8 * 4 )
     bytes_inner =  @numtaxa.to_f * @seqlen.to_f  * 8 * 4
     security_factor = 1.3
@@ -105,38 +104,19 @@ class TreeBunchStarter < TreeBunchStarterBase
     super(opts)
   end
   def start_iteration(opts)
-    logput "starting iteration "
+    logput "Preparing new iteration... "
     check_options(opts)
     begin
-      num_parsi_trees = opts[:num_parsi_trees] || @num_parsi_trees
-      num_bestML_trees = opts[:num_bestML_trees] || @num_bestML_trees
-      if opts[:initial_iteration]
-        logput "Initial iteration, checking num_bestML_trees > num_parsi_trees\n----"
-        phylip_dataset = @phylip
-        num_iteration_trees = num_parsi_trees
-        @update_id = 0
-      else
-        logput "update iteration, looking for parsimony start trees from previous bunch\n----"
-        phylip_dataset = @phylip_updated
-        raise "prev bunch not ready #{@prev_bestML_bunch}" unless File.exist?(@prev_bestML_bunch)
-        last_best_bunch = PerpetualNewick::NewickFile.new(@prev_bestML_bunch)
-        last_best_bunch.save_each_newick_as(File.join(@parsimony_trees_dir, 'prev_parsi_tree'), "nw") 
-        prev_trees = Dir.entries(@parsimony_trees_dir).select{|f| f =~ /^prev_parsi_tree/}
-        prev_trees_paths = prev_trees.map{|f| File.join @parsimony_trees_dir, f}
-        num_iteration_trees = num_parsi_trees * prev_trees.size
-        logput "#{prev_trees.size} initial trees available for this iteration, each will be input for #{num_parsi_trees} parsimonator runs, leading to #{num_iteration_trees} different parsimony starting trees for the new alignment"
-      end
-      if num_bestML_trees > num_iteration_trees 
-        raise "#bestML trees (#{num_bestML_trees}) cant be higher than iteration number of trees #{num_iteration_trees}"
-      end
-      logput "Exp #{opts[:exp_name]}, your cluster will take care of this iteration no #{@update_id}"
+      iteration_data = prepare_iteration(opts)
+      logputgreen "****** Start iteration number #{@update_id} ********"
+      logput "Experiment #{opts[:exp_name]}, iteration no #{@update_id} will be run according to #{@remote_config_file}"
       c = CycleController.new(:update_id => @update_id, 
-                              :phy => phylip_dataset, 
+                              :phy =>              iteration_data.phylip_dataset, 
+                              :num_parsi_trees =>  iteration_data.num_parsi_trees, 
+                              :num_ptrees =>       iteration_data.num_trees, 
+                              :prev_trees_paths => iteration_data.prev_trees_paths, 
+                              :num_bestML_trees => iteration_data.num_bestML_trees,
                               :partition_file => @partition_file, 
-                              :num_parsi_trees => num_parsi_trees, 
-                              :num_ptrees => num_iteration_trees, 
-                              :prev_trees_paths => prev_trees_paths, 
-                              :num_bestML_trees => num_bestML_trees,
                               :base_dir => @base_dir,
                               :remote_config_file => @remote_config_file,
                               :logpath => @logpath,
@@ -152,15 +132,6 @@ class TreeBunchStarter < TreeBunchStarterBase
     rescue Exception => e
       logput(e, error = true)
       raise e
-    end
-  end
-  private
-  def check_options(opts)
-    supported_opts = [:scratch, :num_parsi_trees, :num_bestML_trees, :exp_name, :cycle_batch_script, :initial_iteration]
-    opts.keys.each do |key|
-      unless supported_opts.include?(key)
-        logput "Option #{key} is unknwon"
-      end
     end
   end
 end
