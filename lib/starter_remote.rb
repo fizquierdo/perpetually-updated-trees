@@ -27,15 +27,49 @@ class CycleController
     @opts[:parsimony_remote_dir] = File.join @base_remote_dir, "parsimony_trees"
     @opts[:ml_remote_dir] = File.join @base_remote_dir, "ml_trees"
     @log ||= Logger.new @opts[:logpath]
-    #@log.info "Start cycle #{@opts[:update_id]} with options #{@opts.to_s}"
+    @log.datetime_format = "%Y-%m-%d %H:%M:%S"
+    loginfo "Start cycle #{@opts[:update_id]}"
+    @log.info "Options #{@opts.to_s}"
   end
+
+  def run_as_batch_remote
+    unless @conf['debug']
+      # Prepare iteration data
+      Net::SSH.start(@conf['remote_machine'], @conf['remote_user']) do |ssh|
+        %w(alignment parsimony ml).map{|d| @opts["#{d}_remote_dir".to_sym]}.each do |remote_dir|
+          loginfo "Creating remotely #{remote_dir}"
+          ssh.exec!("mkdir -p #{remote_dir}")
+        end
+      end
+      loginfo "Sending alignment #{@opts[:phy]} to remote machine #{@conf['remote_path']}\n----"
+      Net::SCP.start(@conf['remote_machine'], @conf['remote_user']) do |scp|
+        #send the alignment
+        scp.upload! @opts[:phy], @opts[:alignment_remote_dir]
+        scp.upload! @opts[:partition_file], @opts[:alignment_remote_dir] if File.exist? @opts[:partition_file]
+        # send the starting trees
+        unless @opts[:prev_trees_paths].nil?
+          @opts[:prev_trees_paths].each do |path| 
+            loginfo "Sending Tree #{path} to #{@opts[:parsimony_remote_dir]}"
+            scp.upload! path, @opts[:parsimony_remote_dir]
+          end
+        end
+      end
+    end
+    # Now use Jobber to populate a template and send it
+    build_batch_options(File.basename(@opts[:phy]), File.basename(@opts[:partition_file])) 
+    joberator = PerpetualRemoteJob::Jobber.new(@opts, @conf)
+    joberator.run_pipeline 
+    loginfo "\n\n Finished remote submission, check status at #{@conf['mail_to']}"
+  end
+
+  private
   # NOTE these requirements are specific for our system, should be on a config file
   def parsimonator_requirements
     bytes_inner =  @numtaxa.to_f * @seqlen.to_f
     security_factor = 3.0
     required_MB = bytes_inner * security_factor * 1E-6
     required_MB = 16 unless required_MB > 16 
-    @log.info "Parsimonator requirements in MB: #{required_MB}"
+    loginfo "Parsimonator requirements in MB: #{required_MB}"
     required_MB.to_i
   end
   def raxmllight_requirements
@@ -45,15 +79,15 @@ class CycleController
     security_factor = 1.3
     required_MB = bytes_inner * security_factor * 1E-6
     required_MB = 16 unless required_MB > 16 
-    @log.info "Raxml Light requirements in MB: #{required_MB}"
+    loginfo "Raxml Light requirements in MB: #{required_MB}"
     required_MB.to_i
   end
-
   def build_batch_options(dataset_filename, model_filename)
     raise "User Number of parsimony trees not set" unless @opts[:num_parsi_trees] > 0
     raise "Total Number of parsimony trees not set" unless @opts[:num_ptrees] > 0
     raise "Number of best ML trees not set" unless @opts[:num_bestML_trees] > 0
     # for parsimonator
+    loginfo "Computing requirements"
     @opts[:parsimony_memory_requirements] = parsimonator_requirements
     @opts[:raxml_memory_requirements] = raxmllight_requirements
     dataset_full_path = File.join(@opts[:alignment_remote_dir], dataset_filename)
@@ -67,35 +101,9 @@ class CycleController
     end
     @opts[:base_dir] = @conf['remote_path']
   end
-
-  def run_as_batch_remote
-    unless @conf['debug']
-      # Prepare iteration data
-      Net::SSH.start(@conf['remote_machine'], @conf['remote_user']) do |ssh|
-        %w(alignment parsimony ml).map{|d| @opts["#{d}_remote_dir".to_sym]}.each do |remote_dir|
-          @log.info "Creating remotely #{remote_dir}"
-          @log.info ssh.exec!("mkdir -p #{remote_dir}")
-        end
-      end
-      @log.info "Sending alignment #{@opts[:phy]} to remote machine #{@conf['remote_path']}\n----"
-      Net::SCP.start(@conf['remote_machine'], @conf['remote_user']) do |scp|
-        #send the alignment
-        scp.upload! @opts[:phy], @opts[:alignment_remote_dir]
-        scp.upload! @opts[:partition_file], @opts[:alignment_remote_dir] if File.exist? @opts[:partition_file]
-        # send the starting trees
-        unless @opts[:prev_trees_paths].nil?
-          @opts[:prev_trees_paths].each do |path| 
-            @log.info "Sending Tree #{path} to #{@opts[:parsimony_remote_dir]}"
-            scp.upload! path, @opts[:parsimony_remote_dir]
-          end
-        end
-      end
-    end
-    # Now use Jobber to populate a template and send it
-    build_batch_options(File.basename(@opts[:phy]), File.basename(@opts[:partition_file])) 
-    joberator = PerpetualRemoteJob::Jobber.new(@opts, @conf)
-    joberator.run_pipeline 
-    @log.info "\n\n Finished remote submission"
+  def loginfo(msg)
+    @log.info msg
+    puts msg
   end
 end
 
