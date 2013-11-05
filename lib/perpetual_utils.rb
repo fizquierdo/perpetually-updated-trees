@@ -1,6 +1,7 @@
 
 #require 'bio'
 require 'rphylip'
+require 'logger'
 
 module PerpetualTreeUtils
 

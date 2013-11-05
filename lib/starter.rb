@@ -6,6 +6,7 @@ require 'rraxml'
 require 'rnewick'
 require 'rphylip'
 require 'perpetual_evaluation'
+require 'perpetual_utils'
 
 # gems
 require 'logger'   
