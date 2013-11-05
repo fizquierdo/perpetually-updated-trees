@@ -4,7 +4,7 @@ load 'lib/configuration.rb'
 opts = PerpetualTreeConfiguration::Configurator.new("config/local_config.yml").conf
 
 pumper_libs = %w(configuration perpetual_evaluation phlawd rphylip experiment pumper_helpers
-                  trollop pumper_helpers floatstats perpetual_utils rnewick)
+                  trollop pumper_helpers floatstats perpetual_utils rnewick starter_base)
 
 def syscopy(from, to)
   #system "sudo cp #{from} #{to}"
@@ -179,6 +179,10 @@ task :tutorial_clean do
 end
 desc "Install standalone and generate tutorial"
 task :demo => [:install_standalone, :tutorial_clean, :tutorial_standalone] do
+  puts "ls ztutorial_*_from_rake*"
+end
+desc "Install remote and generate tutorial"
+task :demoremote => [:install_remote, :tutorial_clean, :tutorial_remote] do
   puts "ls ztutorial_*_from_rake*"
 end
 
