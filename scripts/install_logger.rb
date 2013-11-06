@@ -94,7 +94,7 @@ def install_raxml_locally(log)
     :versions => {
     :parser => {:binary => "parser", :folder => 'parser', :ready => true, :comp => "Makefile.SSE3.gcc"}, 
     :examl =>  {:binary => "examl",  :folder => 'examl',  :ready => true, :comp => "Makefile.SSE3.gcc", :req => "mpicc"}},
-    :link => "https://github.com/stamatak/ExaML/archive/#{zipped}"}
+    :link => "https://github.com/fizquierdo/ExaML/archive/#{zipped}"}
   }
 
   programs.each do |key, program|

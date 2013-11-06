@@ -65,12 +65,14 @@ module PerpetualTreeMaker
       end
       available
     end
+    def callstr
+      "(#{@binary} #{@ops} 2> #{@stderr}) > #{@stdout}"
+    end
     def run(logger = nil)
       self.before_run
       @binary = File.join(@binary_path, @binary)
       raise "#{@binary} not found" unless File.exists?(@binary)
-      #call = "#{@binary} #{@ops}" #unless @ops =~ /RUN_NAME/ 
-      call = "(#{@binary} #{@ops} 2> #{@stderr}) > #{@stdout}"
+      call = self.callstr
       if logger.nil?
         puts call
       else
@@ -140,7 +142,47 @@ module PerpetualTreeMaker
     def gather_outfiles
       @outfiles += [self.resultfilename, self.logfilename]
       Dir.entries(Dir.pwd).select{|f| f=~ /^RAxML_binaryCheckpoint.#{@name}_/}.each{ |f| @outfiles << f}
-        @outfiles
+      @outfiles
+    end
+  end
+  class RaxmlExaml < Raxml
+    include TreeCheck
+    attr_reader :starting_newick
+    def initialize(opts)
+      super(opts)
+      if opts[:starting_newick].nil? or not File.exists?(opts[:starting_newick])
+        raise "Examl requires a starting tree" 
+      end
+      @starting_newick = opts[:starting_newick] 
+      if opts[:num_threads].nil?  
+        @binary = 'examl'
+        @num_threads = 2
+      else
+        @binary = 'examl'
+        @num_threads = opts[:num_threads].to_i
+      end
+    end
+    def complete_call
+      #./parser -m DNA -s ../testData/49 -q ../testData/49.model -n 49
+      #mpirun.openmpi -np 2 ./examl -s ../parser/49.binary -t ../testData/49.tree -m PSR -n TESTRUN
+      @ops += " -m PSR -t #{@starting_newick} "
+    end
+    def resultfilename
+      "ExaML_result.#{@name}"
+    end
+    def logfilename
+      "ExaML_log.#{@name}"
+    end
+    def infofilename
+      "ExaML_log.#{@name}"
+    end
+    def gather_outfiles
+      @outfiles += [self.resultfilename, self.logfilename, self.infofilename]
+      Dir.entries(Dir.pwd).select{|f| f=~ /^ExaML_binaryCheckpoint.#{@name}_/}.each{ |f| @outfiles << f}
+      @outfiles
+    end
+    def callstr
+      "(mpirun.openmpi -np #{@num_threads} #{@binary} #{@ops} 2> #{@stderr}) > #{@stdout}"
     end
   end
   class RaxmlGammaScorer < Raxml
