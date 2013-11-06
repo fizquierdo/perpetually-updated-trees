@@ -40,6 +40,24 @@ class TreeBunchStarter < TreeBunchStarterBase
       raise e
     end
   end
+
+  protected
+  def raxmlSearcherFactory(opts, num_threads)
+     bin_path = opts[:binary_path] || File.expand_path(File.join(File.dirname(__FILE__),"../bin"))
+     opts.merge!({:num_threads => num_threads}) if num_threads.to_i > 0
+     if File.exist? File.join(bin_path, "examl")
+       logputgreen "Using Examl to search tree space"
+       searcher = PerpetualTreeMaker::RaxmlExaml.new(opts)
+     elsif File.exist? File.join(bin_path, "raxmlLight")
+       opts.merge!(:flags => " -D ") # Use the RF convergence criterion
+       logputgreen "Using raxmlLight to search tree space"
+       searcher = PerpetualTreeMaker::RaxmlLight.new(opts)
+     else
+       raise "Cannot find examl or raxml-Light in the system"
+       searcher = nil
+     end
+     searcher 
+  end
   private
   def generate_parsimony_trees(num_parsi_trees)
     logput "Preparing parsimony runs for #{num_parsi_trees} trees" 
@@ -101,27 +119,23 @@ class TreeBunchStarter < TreeBunchStarterBase
     gamma_trees = []
     starting_trees.each_with_index do |parsimony_tree, i|
       # Run pipeline locally
-      # Search with raxml light
       tree_id = parsimony_tree.split("parsimonyTree.").last
-      light_opts = {
+      search_opts = {
         :phylip => phylip,
         :partition_file => partition_file,
         :outdir => @ml_trees_dir,
         :logger => @logger,
-        :flags => " -D ", # default to a RF convergence criterion
         :starting_newick => File.join(starting_trees_dir, parsimony_tree),
         :stderr => File.join(@ml_trees_dir, "err#{tree_id}"),
         :stdout => File.join(@ml_trees_dir, "info#{tree_id}"),
         :name => "starting_tree_" + tree_id
       }
-      light_opts.merge!({:num_threads => @num_threads}) if @num_threads.to_i > 0
-      r = PerpetualTreeMaker::RaxmlLight.new(light_opts)
+      r = self.raxmlSearcherFactory(search_opts, @num_threads)
       logput "\nConducting ML search (#{i+1}/#{starting_trees.size}) with PSR model from #{parsimony_tree}"
       r.run
-      #logput "Done ML search for #{parsimony_tree} (#{i+1} of #{starting_trees.size})"
 
       # Score under GAMMA and compute local support after finding the best NNI tree 
-      nni_starting_tree =  File.join(r.outdir, "RAxML_result.#{r.name}")
+      nni_starting_tree =  File.join(r.outdir, r.resultfilename)
       logput "Scoring tree #{i+1} under GAMMA (#{File.basename nni_starting_tree}) "
       scorer_opts = {
         :phylip => phylip,
