@@ -159,23 +159,22 @@ module PerpetualTreeMaker
       sddout = File.join(File.dirname(@stdout), "parser_stdout_#{@name}")
       phylip_binary = "#{@name}.binary" 
       if @partition and not @partition.empty?
-        raise "TODO cant support partition now"
-      else
-        #./parser -m DNA -s ../testData/49 -q ../testData/49.model -n 49
-        call = "(#{parser_binary} #{parser_opts} 2> #{@stderr}) > #{@stdout}"
-        if @logger
-          @logger.info call
-        else
-          puts call
-        end
-        system call
-        if File.exist? phylip_binary
-          FileUtils.move(phylip_binary, @outdir) 
-        else
-          raise "Expected #{phylip_binary} was not generated"
-        end
-        FileUtils.remove("RAxML_info.#{@name}") 
+        parser_opts += " -q #{@partition}"
       end
+      #./parser -m DNA -s ../testData/49 -q ../testData/49.model -n 49
+      call = "(#{parser_binary} #{parser_opts} 2> #{@stderr}) > #{@stdout}"
+      if @logger
+        @logger.info call
+      else
+        puts call
+      end
+      system call
+      if File.exist? phylip_binary
+        FileUtils.move(phylip_binary, @outdir) 
+      else
+        raise "Expected #{phylip_binary} was not generated"
+      end
+      FileUtils.remove("RAxML_info.#{@name}") 
       phylip_binary_format = File.join @outdir, phylip_binary
       @ops = "-s #{phylip_binary_format} -n #{@name} #{@flags}"
     end
