@@ -29,6 +29,8 @@ module PerpetualTreeMaker
     def initialize(opts)
       raise "No alignment in #{opts[:phylip]}" if opts[:phylip].nil? or not File.exist?(opts[:phylip])
       @phylip = opts[:phylip]
+      @partition = opts[:partition_file]
+      @data_type = opts[:data_type] || "DNA"
       @name = opts[:name] || "RUN_NAME"
       @seed = opts[:seed] || "12345"
       @outdir = opts[:outdir] || "test/outdir/#{@name}"
@@ -37,8 +39,9 @@ module PerpetualTreeMaker
       @binary = ""
       @binary_path = opts[:binary_path] || File.expand_path(File.join(File.dirname(__FILE__),"../bin"))
       @flags = opts[:flags] || ""
+      @logger = opts[:logger]
       @ops = "-s #{@phylip} -n #{@name} #{@flags}"
-      @ops += " -q #{opts[:partition_file]} " unless opts[:partition_file].nil? or opts[:partition_file].empty? 
+      @ops += " -q #{@partition} " unless @partition.nil? or @partition.empty? 
     end
     def before_run
       FileUtils.mkdir_p @outdir unless File.exist?(@outdir) 
@@ -68,17 +71,17 @@ module PerpetualTreeMaker
     def callstr
       "(#{@binary} #{@ops} 2> #{@stderr}) > #{@stdout}"
     end
-    def run(logger = nil)
+    def run
       self.before_run
       @binary = File.join(@binary_path, @binary)
       raise "#{@binary} not found" unless File.exists?(@binary)
       call = self.callstr
-      if logger.nil?
+      if @logger.nil?
         puts call
       else
-        logger.info call
-        logger.info "STDERR redirected to  #{@stderr}"
-        logger.info "STDOUT redirected to  #{@stdout}"
+        @logger.info call
+        @logger.info "STDERR redirected to  #{@stderr}"
+        @logger.info "STDOUT redirected to  #{@stdout}"
       end
       system call
       self.after_run
@@ -148,12 +151,41 @@ module PerpetualTreeMaker
   class RaxmlExaml < Raxml
     include TreeCheck
     attr_reader :starting_newick
+    def generate_binary_file
+      raise "Invalid data #{@data_type}" unless %w(DNA PROT).include? @data_type
+      parser_binary = File.join(@binary_path, "parser")
+      parser_opts = "-m #{@data_type} -s #{@phylip} -n #{@name}"
+      sdderr = File.join(File.dirname(@stderr), "parser_stderr_#{@name}")
+      sddout = File.join(File.dirname(@stdout), "parser_stdout_#{@name}")
+      phylip_binary = "#{@name}.binary" 
+      if @partition and not @partition.empty?
+        raise "TODO cant support partition now"
+      else
+        #./parser -m DNA -s ../testData/49 -q ../testData/49.model -n 49
+        call = "(#{parser_binary} #{parser_opts} 2> #{@stderr}) > #{@stdout}"
+        if @logger
+          @logger.info call
+        else
+          puts call
+        end
+        system call
+        if File.exist? phylip_binary
+          FileUtils.move(phylip_binary, @outdir) 
+        else
+          raise "Expected #{phylip_binary} was not generated"
+        end
+        FileUtils.remove("RAxML_info.#{@name}") 
+      end
+      phylip_binary_format = File.join @outdir, phylip_binary
+      @ops = "-s #{phylip_binary_format} -n #{@name} #{@flags}"
+    end
     def initialize(opts)
       super(opts)
       if opts[:starting_newick].nil? or not File.exists?(opts[:starting_newick])
         raise "Examl requires a starting tree" 
       end
       @starting_newick = opts[:starting_newick] 
+      check_fulltree
       if opts[:num_threads].nil?  
         @binary = 'examl'
         @num_threads = 2
@@ -161,9 +193,9 @@ module PerpetualTreeMaker
         @binary = 'examl'
         @num_threads = opts[:num_threads].to_i
       end
+      generate_binary_file
     end
     def complete_call
-      #./parser -m DNA -s ../testData/49 -q ../testData/49.model -n 49
       #mpirun.openmpi -np 2 ./examl -s ../parser/49.binary -t ../testData/49.tree -m PSR -n TESTRUN
       @ops += " -m PSR -t #{@starting_newick} "
     end
@@ -174,7 +206,7 @@ module PerpetualTreeMaker
       "ExaML_log.#{@name}"
     end
     def infofilename
-      "ExaML_log.#{@name}"
+      "ExaML_info.#{@name}"
     end
     def gather_outfiles
       @outfiles += [self.resultfilename, self.logfilename, self.infofilename]
