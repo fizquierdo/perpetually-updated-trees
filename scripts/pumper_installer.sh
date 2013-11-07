@@ -1,8 +1,17 @@
 #!/bin/sh
 # Fernando Izquierdo Oct 2013 fer.izquierdo@gmail.com
 
-# This script will check all requirements and do a minimal standalon installation of PUmPER
+# This script will check all requirements and do a minimal standalone (default) installation of PUmPER
 # No guarantees given
+mode=standalone
+if [ "$#" -eq 1 ]; then
+  mode=$1
+fi
+if [ "$#" -gt 1 ]; then
+  echo "Usage: $0 [standalone|remote]" 
+  exit 1
+fi
+
 
 # If ruby is not available in your system, an installation with rvm will be attempted
 echo -n "Testing ruby ... "
@@ -32,4 +41,4 @@ echo "OK"
 
 # Call the generic PUmPER installation ruby script (standalone)
 echo -n "Installing PUmPER dependencies ... "
-scripts/install_dependencies.rb standalone
+scripts/install_dependencies.rb $mode
