@@ -41,7 +41,7 @@ class ProjectResults
   end
   # Running time for search
   def times
-    timing_info_files.map{|i| i.total_search_time}
+    timing_info_files.map{|i| i.total_search_time.to_f}
   end
   # Number of iterations per search
   def search_iterations
@@ -67,16 +67,17 @@ class ProjectResults
   end
   def timing_info_files
     # ignore the timing related to the SCORING info
-    timing_files = map_to_info_file entries.grep(/^RAxML_info/).delete_if{|f| f =~ /SCORING/}
+    #timing_files = map_to_info_file entries.grep(/^RAxML_info/).delete_if{|f| f =~ /SCORING/}
+    timing_files = map_to_info_file entries.grep(/^(Exa|RAx)ML_info/).delete_if{|f| f =~ /SCORING/}
     # reject the timing files without a time
     timing_files = timing_files.select{|info| info.has_search_time?}
     timing_files
   end
   def scoring_info_files
-    map_to_info_file entries.grep(/info\.SCORING/) # TODO hard-coded dependency in the name!
+    map_to_info_file entries.grep(/info\.SCORING/) 
   end
   def log_files
-    entries.grep(/^RAxML_log/)
+    entries.grep(/^(Exa|RAx)ML_log/)
   end
 end
 

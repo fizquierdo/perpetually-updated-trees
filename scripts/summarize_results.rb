@@ -7,7 +7,11 @@ require 'perpetual_evaluation'
 
 module Enumerable
   def to_floatstats
-    "Avg #{self.average.r_to(2)}, std dev #{self.standard_deviation.r_to(2)} (#{self.size.to_s})"
+    prec = 6
+    return "" if self.nil? or self.empty?
+    avg = self.average.r_to(prec)
+    stddev = self.standard_deviation.r_to(prec)
+    "Avg #{avg}, std dev #{stddev} (#{self.size.to_s})"
   end
 end
 
