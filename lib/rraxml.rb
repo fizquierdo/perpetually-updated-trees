@@ -154,7 +154,7 @@ module PerpetualTreeMaker
     def generate_binary_file
       raise "Invalid data #{@data_phy}" unless %w(DNA PROT).include? @data_phy
       parser_binary = File.join(@binary_path, "parser")
-      parser_opts = "-m #{@data_type} -s #{@phylip} -n #{@name}"
+      parser_opts = "-m #{@data_phy} -s #{@phylip} -n #{@name}"
       sdderr = File.join(File.dirname(@stderr), "parser_stderr_#{@name}")
       sddout = File.join(File.dirname(@stdout), "parser_stdout_#{@name}")
       phylip_binary = "#{@name}.binary" 
