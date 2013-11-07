@@ -13,6 +13,18 @@ require 'net/ssh'
 require 'net/scp'
 
 
+def mem_requirements_calculator(data_type)
+  case data_type
+  when 'DNA'
+    states = 4
+  when 'PROT'
+    states = 20
+  else
+    raise "Unknown data type"
+  end
+end
+
+
 class CycleController
   attr_reader :opts
   def initialize(opts)
@@ -63,7 +75,6 @@ class CycleController
   end
 
   private
-  # NOTE these requirements are specific for our system, should be on a config file
   def parsimonator_requirements
     bytes_inner =  @numtaxa.to_f * @seqlen.to_f
     security_factor = 3.0
@@ -73,9 +84,10 @@ class CycleController
     required_MB.to_i
   end
   def raxmllight_requirements
-    # this depends on the type of data!
-    #(n-2) * m * ( 8 * 4 )
-    bytes_inner =  @numtaxa.to_f * @seqlen.to_f  * 8 * 4
+    rate_method = 1 # 4 if we switch to GAMMA
+    states = states_calculator(@opts[:data_type])
+    #(n-2) * m * ( 8 * states * rate_method )
+    bytes_inner =  @numtaxa.to_f * @seqlen.to_f  * 8 * rate_method * states
     security_factor = 1.3
     required_MB = bytes_inner * security_factor * 1E-6
     required_MB = 16 unless required_MB > 16 
@@ -124,6 +136,7 @@ class TreeBunchStarter < TreeBunchStarterBase
                               :num_ptrees =>       iteration_data.num_trees, 
                               :prev_trees_paths => iteration_data.prev_trees_paths, 
                               :num_bestML_trees => iteration_data.num_bestML_trees,
+                              :data_phy =>         @data_phy, 
                               :partition_file => @partition_file, 
                               :base_dir => @base_dir,
                               :remote_config_file => @remote_config_file,

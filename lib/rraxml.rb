@@ -30,7 +30,7 @@ module PerpetualTreeMaker
       raise "No alignment in #{opts[:phylip]}" if opts[:phylip].nil? or not File.exist?(opts[:phylip])
       @phylip = opts[:phylip]
       @partition = opts[:partition_file]
-      @data_type = opts[:data_type] || "DNA"
+      @data_phy = opts[:data_phy] || "DNA"
       @name = opts[:name] || "RUN_NAME"
       @seed = opts[:seed] || "12345"
       @outdir = opts[:outdir] || "test/outdir/#{@name}"
@@ -152,7 +152,7 @@ module PerpetualTreeMaker
     include TreeCheck
     attr_reader :starting_newick
     def generate_binary_file
-      raise "Invalid data #{@data_type}" unless %w(DNA PROT).include? @data_type
+      raise "Invalid data #{@data_phy}" unless %w(DNA PROT).include? @data_phy
       parser_binary = File.join(@binary_path, "parser")
       parser_opts = "-m #{@data_type} -s #{@phylip} -n #{@name}"
       sdderr = File.join(File.dirname(@stderr), "parser_stderr_#{@name}")

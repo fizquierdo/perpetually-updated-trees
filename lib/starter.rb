@@ -122,6 +122,7 @@ class TreeBunchStarter < TreeBunchStarterBase
       tree_id = parsimony_tree.split("parsimonyTree.").last
       search_opts = {
         :phylip => phylip,
+        :data_phy => @data_phy,
         :partition_file => partition_file,
         :outdir => @ml_trees_dir,
         :logger => @logger,

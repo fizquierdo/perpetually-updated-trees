@@ -38,6 +38,7 @@ opts = Trollop::options do
   opt :remove,     "name of the experiment to remove",  :type => :string
   opt :initial_phy,"initial alignment",                 :type => :string
   opt :update_phy, "update with a new update",          :type => :string
+  opt :data_phy,   "type of data [DNA|PROT]",           :default => 'DNA'
   opt :partitions, "run partitioned search with file",  :type => :string
   opt :parsi_size, "Number of new parsimony trees",                    :default => 2
   opt :bunch_size, "Number of best ML trees at the end of iteration ", :default => 3
@@ -57,6 +58,12 @@ opts = Trollop::options do
   puts "(bunch_size referes to the previous iteration)"
   puts
 
+end
+
+# Verifiy data types
+unless %w(DNA PROT).include? opts[:data_phy]
+  puts "Specify a correct data type for the phylip alignment: DNA or PROT"
+  exit
 end
 
 # load existing experiments
@@ -97,6 +104,7 @@ if opts[:initial_phy]
   puts "Starting initial iteration at #{pumper_path(base_dir)}"
   starter_opts = {:phylip => opts[:initial_phy], 
                   :partition_file => opts[:partitions],
+                  :data_phy => opts[:data_phy],
                   :num_threads => opts[:num_threads],
                   :conf => read_yaml(opts[:config_file]),
                   :base_dir => base_dir,
@@ -140,6 +148,7 @@ if opts[:update_phy]
     update_dir = File.join e.dirname("output"), "bunch_#{next_id.to_s}"
     updater = TreeBunchStarter.new(:phylip => opts[:update_phy], 
                                    :partition_file => opts[:partitions],
+                                   :data_phy => opts[:data_phy],
                                    :prev_dir => last_dir,
                                    :base_dir => update_dir, 
                                    :update_id => next_id.to_i,

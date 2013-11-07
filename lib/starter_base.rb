@@ -23,6 +23,7 @@ class TreeBunchStarterBase
 
   def initialize(opts)
     @phylip = opts[:phylip]
+    @data_phy = opts[:data_phy]
     @partition_file = opts[:partition_file] || ""
     @base_dir = opts[:base_dir]
     @prev_dir = opts[:prev_dir]
