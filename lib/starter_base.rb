@@ -19,7 +19,7 @@ end
 class TreeBunchStarterBase
   # Given an initial alignment, it creates a initial bunch of ML trees in bunch_0 dir
   # should log results
-  attr_reader :bestML_trees_dir
+  attr_reader :bestML_trees_dir 
 
   def initialize(opts)
     @phylip = opts[:phylip]
