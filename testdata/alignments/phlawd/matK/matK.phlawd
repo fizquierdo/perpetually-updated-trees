@@ -7,5 +7,4 @@ coverage = 0.4
 identity = 0.2
 db = ../../GenBank/pln.db
 knownfile = matK.keep
-numthreads = 10
-excludelistfile = exclude
+numthreads = 4
