@@ -239,7 +239,7 @@ module PerpetualTreeMaker
       @ops += " -T #{@num_threads} " if @num_threads > 0
     end
     def gather_outfiles
-      @outfiles += ["RAxML_fastTree.#{@name}", "RAxML_fastTreeSH_Support.#{@name}"]
+      @outfiles += ["RAxML_fastTree.#{@name}", "RAxML_fastTree_perPartition_SH_Support.#{@name}", "RAxML_fastTreeSH_Support.#{@name}"]
     end
     def finalLH(infofile)
       lines  = File.open(infofile).readlines.select{|l| l =~ /Final Likelihood/}

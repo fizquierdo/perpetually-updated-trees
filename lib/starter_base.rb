@@ -87,6 +87,10 @@ class TreeBunchStarterBase
       logput "Copying new update alignment (not expanding) from #{@phylip} to #{pumper_path @phylip_updated}"
       FileUtils.cp @phylip, @phylip_updated 
     end
+    unless @partition_file.empty?
+      logput("Could not find #{@partition_file}", error = true) unless File.exist? @partition_file
+      FileUtils.cp @partition_file, @alignment_dir 
+    end
     ready
   end
   private
@@ -95,7 +99,7 @@ class TreeBunchStarterBase
     @logger.datetime_format = "%Y-%m-%d %H:%M:%S"
   end
   def check_options(opts)
-    supported_opts = [:scratch, :num_parsi_trees, :num_bestML_trees, :exp_name, :cycle_batch_script, :initial_iteration]
+    supported_opts = [:scratch, :partitions, :num_parsi_trees, :num_bestML_trees, :exp_name, :cycle_batch_script, :initial_iteration]
     opts.keys.each do |key|
       unless supported_opts.include?(key)
         logput "Option #{key} is unknwon"

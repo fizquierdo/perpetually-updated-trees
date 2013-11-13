@@ -41,9 +41,9 @@ end
 phlawd_fastas = PerpetualTreeUtils::FastaAlignmentCollection.new phlawd_iteration, log
 phlawd_fastas.build_supermatrix(opts, 0)
 aln = phlawd_fastas.aln
-part = phlawd_fastas.part
-
 raise "Alignment not available" unless aln and File.exist? aln
+part = phlawd_fastas.part
+raise "Partition file not available" unless part and File.exist? part
 
 # Run iteration 1 of Raxml searches
 log.info "### SEARCH ITERATION 1 [INITIAL] ###"
