@@ -13,7 +13,8 @@ require 'net/ssh'
 require 'net/scp'
 
 
-def mem_requirements_calculator(data_type)
+def states_calculator(data_type)
+  puts "data type is " + data_type.to_s
   case data_type
   when 'DNA'
     states = 4
@@ -85,7 +86,7 @@ class CycleController
   end
   def raxmllight_requirements
     rate_method = 1 # 4 if we switch to GAMMA
-    states = states_calculator(@opts[:data_type])
+    states = states_calculator(@opts[:data_phy])
     #(n-2) * m * ( 8 * states * rate_method )
     bytes_inner =  @numtaxa.to_f * @seqlen.to_f  * 8 * rate_method * states
     security_factor = 1.3
@@ -125,6 +126,7 @@ class TreeBunchStarter < TreeBunchStarterBase
   end
   def start_iteration(opts)
     logput "Preparing new iteration... "
+    logput "Working with data #{@data_phy} "
     check_options(opts)
     begin
       iteration_data = prepare_iteration(opts)
