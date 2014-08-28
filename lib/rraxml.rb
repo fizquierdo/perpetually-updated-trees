@@ -235,7 +235,7 @@ module PerpetualTreeMaker
       end
     end
     def complete_call
-      @ops += " -m GTRGAMMA -t #{@starting_newick} -f J"
+      @ops += " -m GTRGAMMA -t #{@starting_newick} -f J -p 12345 "
       @ops += " -T #{@num_threads} " if @num_threads > 0
     end
     def gather_outfiles
